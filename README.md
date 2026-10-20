@@ -28,7 +28,7 @@ She works one invoice at a time. The queue is on the left, the original in the m
 
 4. **A line total is not recalculated from quantity and price.** I wanted that formula. This set does not support it. On `inv-001` the line is gross. On `inv-002` it is net, and it includes a discount. An edit changes only the field she touched.
 
-5. **I deliberately left out bulk approval.** One click would book a pile she had not looked at. I also left out uploads, new OCR, and sending invoices into an accounting system. This version is only the review itself.
+5. **I deliberately left out bulk approval.** One click would book a pile she had not looked at.
 
 ## Before production
 
@@ -46,7 +46,7 @@ Faster is not better if more errors get through. The result I would want is less
 
 ## AI
 
-I used Cursor. There was a lot of back and forth.
+I used Cursor. There was a lot of back and forth. I can walk through that in the interview.
 
 ## Not finished
 
