@@ -4,7 +4,10 @@ import { MantineProvider } from '@mantine/core'
 import '@mantine/core/styles.css'
 import { App } from './app/App.tsx'
 import { theme } from './app/theme.ts'
+import { useReviewStore } from './features/invoice-review/model/review-store.ts'
 import './index.css'
+
+void useReviewStore.persist.rehydrate()
 
 const rootElement = document.getElementById('root')
 

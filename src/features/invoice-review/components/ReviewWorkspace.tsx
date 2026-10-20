@@ -9,6 +9,8 @@ import {
   Title,
 } from '@mantine/core'
 import { clients, invoices } from '../data/invoices.ts'
+import { getEffectiveInvoice } from '../model/corrections.ts'
+import { useReviewStore } from '../model/review-store.ts'
 import type { OriginalInvoice } from '../model/types.ts'
 import { DocumentViewer } from './DocumentViewer.tsx'
 import { InvoiceQueue } from './InvoiceQueue.tsx'
@@ -28,10 +30,21 @@ export function ReviewWorkspace() {
     useState<QueuePreference>('auto')
   const queueCollapsed =
     queuePreference === 'auto' ? isNarrow : queuePreference === 'closed'
+  const reviews = useReviewStore((state) => state.reviews)
   const clientInvoices = invoices.filter(
     (invoice) => invoice.client.id === clientId,
   )
   const selected = selectedInvoice(clientInvoices, invoiceId)
+  const queueInvoices = clientInvoices.map((invoice) => {
+    const effective = getEffectiveInvoice(invoice, reviews[invoice.id])
+    return {
+      id: invoice.id,
+      vendorName: effective.fields.vendorName,
+      invoiceNumber: effective.fields.invoiceNumber,
+      totalAmount: effective.fields.totalAmount,
+      currency: effective.fields.currency,
+    }
+  })
 
   function selectClient(nextClientId: string) {
     const nextInvoices = invoices.filter(
@@ -107,7 +120,7 @@ export function ReviewWorkspace() {
         hidden={queueCollapsed}
       >
         <InvoiceQueue
-          invoices={clientInvoices}
+          invoices={queueInvoices}
           selectedId={selected?.id ?? null}
           onSelect={setInvoiceId}
         />

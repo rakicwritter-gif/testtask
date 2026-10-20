@@ -1,16 +1,24 @@
 import type { KeyboardEvent } from 'react'
 import { Badge, Text } from '@mantine/core'
-import type { OriginalInvoice } from '../model/types.ts'
 import {
   CURRENCY_NOT_DETECTED,
   formatAmount,
   formatInvoiceNumber,
+  NOT_DETECTED,
   PENDING_STATUS,
 } from './display.ts'
+
+export type QueueInvoice = {
+  id: string
+  vendorName: string | null
+  invoiceNumber: string | null
+  totalAmount: number | null
+  currency: string | null
+}
 import classes from './workspace.module.css'
 
 type InvoiceQueueProps = {
-  invoices: readonly OriginalInvoice[]
+  invoices: readonly QueueInvoice[]
   selectedId: string | null
   onSelect: (invoiceId: string) => void
 }
@@ -42,7 +50,7 @@ export function InvoiceQueue({
           <nav aria-label="Invoices">
             {invoices.map((invoice) => {
               const selected = invoice.id === selectedId
-              const currency = invoice.fields.currency.value
+              const currency = invoice.currency
               return (
                 <button
                   key={invoice.id}
@@ -54,16 +62,18 @@ export function InvoiceQueue({
                   onKeyDown={(event) => moveSelection(event, invoice.id)}
                 >
                   <span className={classes.vendor}>
-                    {invoice.fields.vendorName.value}
+                    {invoice.vendorName ?? NOT_DETECTED}
                   </span>
                   <span className={classes.muted}>
-                    {formatInvoiceNumber(invoice.fields.invoiceNumber.value)}
+                    {formatInvoiceNumber(invoice.invoiceNumber)}
                     {' · '}
                     {invoice.id}
                   </span>
                   <span className={classes.amountRow}>
                     <span className={classes.amount}>
-                      {formatAmount(invoice.fields.totalAmount.value, currency)}
+                      {invoice.totalAmount === null
+                        ? NOT_DETECTED
+                        : formatAmount(invoice.totalAmount, currency)}
                     </span>
                     <Badge size="xs" variant="light" color="gray">
                       {PENDING_STATUS}

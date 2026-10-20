@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Badge, Tabs, Text, Title } from '@mantine/core'
+import { getEffectiveInvoice } from '../model/corrections.ts'
+import { useReviewStore } from '../model/review-store.ts'
 import type { OriginalInvoice } from '../model/types.ts'
-import { formatInvoiceNumber, PENDING_STATUS } from './display.ts'
+import { formatInvoiceNumber, NOT_DETECTED, PENDING_STATUS } from './display.ts'
 import { InvoiceDetails } from './InvoiceDetails.tsx'
 import { LineItemsTable } from './LineItemsTable.tsx'
 import classes from './workspace.module.css'
@@ -12,17 +14,21 @@ type ReviewPanelProps = {
 
 export function ReviewPanel({ invoice }: ReviewPanelProps) {
   const [tab, setTab] = useState('details')
+  const review = useReviewStore((state) =>
+    invoice ? state.reviews[invoice.id] : undefined,
+  )
+  const effective = invoice ? getEffectiveInvoice(invoice, review) : null
 
   return (
     <section className={classes.panel} aria-label="Invoice review">
-      {invoice ? (
+      {invoice && effective ? (
         <>
           <header className={classes.panelHeader}>
             <Title order={2} size="h4">
-              {invoice.fields.vendorName.value}
+              {effective.fields.vendorName ?? NOT_DETECTED}
             </Title>
             <Text className={classes.muted} mt={4}>
-              {formatInvoiceNumber(invoice.fields.invoiceNumber.value)}
+              {formatInvoiceNumber(effective.fields.invoiceNumber)}
               {' · '}
               {invoice.id}
               {' · '}
@@ -51,10 +57,10 @@ export function ReviewPanel({ invoice }: ReviewPanelProps) {
               </Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="details" style={{ overflow: 'auto' }}>
-              <InvoiceDetails invoice={invoice} />
+              <InvoiceDetails key={invoice.id} invoice={invoice} />
             </Tabs.Panel>
             <Tabs.Panel value="lines" style={{ overflow: 'auto' }}>
-              <LineItemsTable invoice={invoice} />
+              <LineItemsTable key={invoice.id} invoice={invoice} />
             </Tabs.Panel>
           </Tabs>
         </>

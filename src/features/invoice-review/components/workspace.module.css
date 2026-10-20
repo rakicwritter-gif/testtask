@@ -191,6 +191,7 @@
 }
 
 .fields dt {
+  padding-top: 7px;
   color: var(--mantine-color-dimmed);
   font-size: 12px;
   line-height: 1.4;
@@ -224,4 +225,57 @@
   font-variant-numeric: tabular-nums;
   text-align: right;
   white-space: nowrap;
+}
+
+.correction {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.editedRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+
+.editedMark {
+  color: var(--mantine-color-blue-7);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.restoreButton {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--mantine-color-blue-7);
+  font: inherit;
+  font-size: 11px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.restoreButton:focus-visible {
+  outline: 2px solid var(--mantine-color-blue-6);
+  outline-offset: 2px;
+}
+
+.originalHint,
+.emptyHint {
+  margin: 0;
+  color: var(--mantine-color-dimmed);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.numericInput {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.lineTable {
+  min-width: 36rem;
 }

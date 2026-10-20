@@ -149,13 +149,14 @@ describe('ReviewWorkspace', () => {
     const accounts = within(
       screen.getByRole('region', { name: 'Invoice review' }),
     ).getByRole('list', { name: 'Bank accounts' })
-    expect(within(accounts).getAllByRole('listitem')).toHaveLength(
+    const accountInputs = within(accounts).getAllByRole('textbox')
+    expect(accountInputs).toHaveLength(
       missingOriginal.fields.bankAccounts.value.length,
     )
     expect(missingOriginal.fields.bankAccounts.value).toHaveLength(7)
-    for (const account of missingOriginal.fields.bankAccounts.value) {
-      expect(within(accounts).getByText(account)).toBeInTheDocument()
-    }
+    expect(
+      accountInputs.map((input) => (input as HTMLInputElement).value),
+    ).toEqual([...missingOriginal.fields.bankAccounts.value])
   })
 
   it('renders a scrollable line-item table with source units and precision', () => {
@@ -169,8 +170,8 @@ describe('ReviewWorkspace', () => {
 
     showInvoice('inv-022')
     fireEvent.click(screen.getByRole('tab', { name: /Line items/ }))
-    expect(screen.getByText('0.2566')).toBeInTheDocument()
-    expect(screen.getByText('0.0042')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('0.2566')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('0.0042')).toBeInTheDocument()
 
     showInvoice('inv-004')
     fireEvent.click(screen.getByRole('tab', { name: /Line items/ }))
@@ -178,7 +179,7 @@ describe('ReviewWorkspace', () => {
     const unit = invoice?.lineItems.find((line) => line.unit.value === 'KO')
       ?.unit.value
     expect(unit).toBe('KO')
-    expect(screen.getAllByText('KO').length).toBeGreaterThan(0)
+    expect(screen.getAllByDisplayValue('KO').length).toBeGreaterThan(0)
 
     showInvoice('inv-023')
     expect(screen.getByRole('button', { name: /inv-023/ })).toHaveTextContent(
