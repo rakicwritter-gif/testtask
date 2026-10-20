@@ -125,6 +125,14 @@ export function ReviewPanel({
                   )}
             </p>
           </header>
+          {review?.status === 'set_aside' ? (
+            <div className={classes.setAsideCallout}>
+              <p className={classes.setAsideCalloutLabel}>Set aside reason</p>
+              <p className={classes.setAsideCalloutReason}>
+                {review.setAsideReason}
+              </p>
+            </div>
+          ) : null}
           <IssuesSummary
             invoiceId={invoice.id}
             issues={issues}

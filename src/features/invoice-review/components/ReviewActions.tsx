@@ -83,12 +83,9 @@ export function ReviewActions({
         </Text>
       ) : null}
       {status === 'set_aside' ? (
-        <>
-          <Text size="sm">Set aside: {review?.setAsideReason}</Text>
-          <Button mt="sm" size="sm" variant="default" onClick={resume}>
-            Resume review
-          </Button>
-        </>
+        <Button mt="sm" size="sm" variant="default" onClick={resume}>
+          Resume review
+        </Button>
       ) : null}
       {status === 'pending' ? (
         <>

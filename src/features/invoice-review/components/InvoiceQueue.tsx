@@ -144,7 +144,7 @@ export function InvoiceQueue({
                         key={invoice.id}
                         id={queueItemId(invoice.id)}
                         type="button"
-                        className={classes.queueItem}
+                        className={`${classes.queueItem} ${accentClass(invoice)}`}
                         aria-current={selected ? 'true' : undefined}
                         onClick={() => onSelect(invoice.id)}
                         onKeyDown={(event) => moveSelection(event, invoice.id)}
@@ -204,6 +204,14 @@ function statusTone(label: string): string {
   if (label === 'Confirmed') return classes.statusConfirmed
   if (label === 'Set aside') return classes.statusAside
   return classes.statusPending
+}
+
+function accentClass(invoice: QueueInvoice): string {
+  if (invoice.statusLabel === 'Confirmed') return classes.queueAccentConfirmed
+  if (invoice.statusLabel === 'Set aside') return classes.queueAccentAside
+  if (invoice.attention === 'Blocking') return classes.queueAccentBlocking
+  if (invoice.attention === 'Warning') return classes.queueAccentWarning
+  return classes.queueAccentNeutral
 }
 
 function queueItemId(invoiceId: string): string {

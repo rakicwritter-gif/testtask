@@ -1,62 +1,55 @@
 # Invoice Review Workspace
 
-A desktop workspace for an accountant to check AI-extracted invoice data against the original document, correct mistakes, and record a review decision.
+A desk for an accountant who checks invoices that have already been read by OCR. She compares each one with the original, fixes mistakes, and decides whether it can be booked.
 
-## Setup
+## Run
 
-Requires Node.js 20+ and npm.
+Node.js 20+ and npm.
 
 ```bash
-npm install
-npm run dev
+npm install && npm run dev
 ```
 
-Open the local URL printed by Vite, usually `http://localhost:5173`.
+Open the URL Vite prints, usually `http://localhost:5173`. No backend and no setup file. The invoices and scans are already in the project.
 
-| Script | Purpose |
-| --- | --- |
-| `npm run dev` | Start the local app |
-| `npm run lint` | Lint |
-| `npm run typecheck` | Typecheck |
-| `npm run test:run` | Unit and component tests |
-| `npm run test:e2e` | Two Playwright smoke tests (Chromium) |
-| `npm run build` | Typecheck and production build |
+## Who it is for
 
-The first end-to-end run needs the Playwright browser: `npx playwright install chromium`.
+I pictured one accountant with a pile of supplier invoices for two small companies, Bili Brig and Call Ero. Her morning is not data entry. The scan is already read. Her job is to see whether the reading matches the paper, fix what does not, and say either "book this" or "not yet."
 
-## What the workspace does
-
-The accountant stays on one screen: an invoice queue, the original PDF or image, and the extracted invoice. Select a client, open an invoice, compare it with the source, correct header fields, amounts, bank accounts, and existing line items, then confirm it or set it aside with a reason. Progress is the count of those decisions for the current client.
-
-Confirmation is an explicit action. It is allowed only when the original document is available and the invoice has no blocking issue. Warnings, including low confidence and a possible duplicate, do not confirm or reject an invoice by themselves. A confirmed invoice is read-only. A set-aside invoice stays in the queue and can be resumed with its corrections intact.
-
-**Reset demo**, in the header, asks for confirmation and then clears only this app’s saved corrections and decisions. The supplied invoices are not changed.
-
-The longer product rationale is in [docs/PROJECT.md](docs/PROJECT.md).
+She works one invoice at a time. The queue is on the left, the original in the middle, the extracted values on the right. She should not have to remember a number while switching screens.
 
 ## Decisions
 
-- Extracted values stay immutable. Corrections and review decisions are stored separately in this browser and applied when the screen is shown.
-- Existing line items can be corrected. Adding, removing, or reordering rows is out of scope.
-- A missing original blocks confirmation. Five sample invoices have no file; they can be set aside.
-- Currency is never guessed. A missing currency stays missing until someone enters one.
-- Line totals are not recalculated from quantity and unit price. That approach was considered and rejected because the sample does not use one net or gross meaning for line totals. An edit changes only the field that was edited.
-- Bulk approval, uploads, OCR, accounting export, and collaboration are not part of this prototype.
+1. **The extraction is never overwritten.** A correction sits in a separate layer in this browser. She can see what the model said and restore it. If a booking is wrong later, it is clear whether the model or the person changed the value.
 
-## Open questions for an accountant
+2. **Confirmation is her click.** A missing original, a missing invoice number, or a missing total blocks it. Low confidence, a possible duplicate, and a net-plus-VAT mismatch are warnings. They do not approve or reject the invoice. A quiet invoice still waits for her. High confidence is not proof.
 
-1. Which fields must be checked before confirmation, and does that differ by client?
-2. Which amount differences are real errors, and which are rounding, discounts, or tax presentation?
-3. How should a missing or unreadable original be resolved, and is currency always required?
+3. **A duplicate is the same client, supplier, and invoice number.** The same amount is not enough. `inv-006` and `inv-007` are the same invoice received twice. `inv-001` and `inv-012` share a total and are two real invoices. Matching on amount would flag every repeat supplier.
 
-## How to judge whether this helps
+4. **A line total is not recalculated from quantity and price.** I wanted that formula. This set does not support it. On `inv-001` the line is gross. On `inv-002` it is net, and it includes a discount. An edit changes only the field she touched.
 
-Useful signs would be time to review an invoice, confirmations later found to be wrong, how often invoices need corrections, how often warnings are false alarms, and how often invoices are set aside.
+5. **I deliberately left out bulk approval.** One click would book a pile she had not looked at. I also left out uploads, new OCR, and sending invoices into an accounting system. This version is only the review itself.
 
-## Limitations
+## Before production
 
-This is a single-user local prototype. Browser storage is not an audit trail and is not shared or secured for production. The validation rules are a small review aid, not a legal or accounting ruleset. Confidence scores are extraction signals, not proof that a value is right or wrong. The viewer can show the supplied PDF and image files; it cannot highlight a field inside the document because the data has no coordinates.
+1. Which fields must be filled before she can confirm, and is that list the same for every client?
+2. Which amount differences are real errors, and which are rounding, a discount, or another way of showing tax?
+3. When the original file is missing, who gets it, and can she confirm without it?
 
-## Development
+## How I would know it works
 
-The workspace was implemented with assistance from Cursor. The review rules above were checked against the supplied invoices and the automated tests, including `inv-006` / `inv-007` for a possible duplicate and missing currency, `inv-003` for a missing original, and `inv-011` for a long multi-page invoice.
+I would time the same invoices the old way, document in one window and a spreadsheet in another, and this way, on one screen. Separately for clean invoices and invoices with warnings.
+
+I would measure time per invoice, confirmations later found to be wrong, how often a warning was a false alarm, and how often she had to correct or set an invoice aside.
+
+Faster is not better if more errors get through. The result I would want is less time per invoice and no rise in wrong confirmations.
+
+## AI
+
+I used Cursor. There was a lot of back and forth.
+
+## Not finished
+
+I did not get the PDFs into a state I trust. `inv-011` and `inv-022` open in the browser's own viewer, and I ran out of time to make that solid. Photos zoom in the app. PDFs do not.
+
+A confirmed invoice cannot be opened again. I would want a way to undo that before anyone used this for real.

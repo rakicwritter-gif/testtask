@@ -144,9 +144,8 @@ describe('review decisions', () => {
     await act(() => useReviewStore.persist.rehydrate())
 
     showInvoice('inv-003')
-    expect(
-      screen.getByText('Set aside: Waiting for the PDF'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Set aside reason')).toBeInTheDocument()
+    expect(screen.getByText('Waiting for the PDF')).toBeInTheDocument()
     expect(screen.getByLabelText('Supplier')).toBeDisabled()
     expect(screen.getByLabelText('Supplier')).toHaveValue('Checked supplier')
 

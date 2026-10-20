@@ -61,7 +61,8 @@ test('sets a missing original aside, resumes the correction, and resets only thi
   await expect(page.getByRole('status', { name: /Set aside 1/ })).toBeVisible()
 
   await page.getByRole('button', { name: /inv-003/ }).click()
-  await expect(page.getByText('Set aside: Waiting for the PDF')).toBeVisible()
+  await expect(page.getByText('Set aside reason')).toBeVisible()
+  await expect(page.getByText('Waiting for the PDF')).toBeVisible()
   const setAsideSupplier = page.getByRole('textbox', {
     name: 'Supplier',
     exact: true,
