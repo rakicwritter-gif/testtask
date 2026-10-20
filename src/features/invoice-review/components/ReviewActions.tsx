@@ -73,7 +73,7 @@ export function ReviewActions({
   return (
     <footer className={classes.actions} aria-label="Review actions">
       {notice ? (
-        <p className={classes.notice} aria-live="polite">
+        <p className={classes.notice} role="status">
           {notice}
         </p>
       ) : null}
@@ -107,6 +107,7 @@ export function ReviewActions({
               <Textarea
                 id="set-aside-reason"
                 label="Reason"
+                autoFocus
                 size="xs"
                 autosize
                 minRows={2}

@@ -67,6 +67,7 @@ type ReviewState = {
   confirmInvoice: (invoiceId: string) => DecisionResult
   setAsideInvoice: (invoiceId: string, reason: string) => DecisionResult
   resumeInvoice: (invoiceId: string) => DecisionResult
+  resetReviews: () => void
 }
 
 export const useReviewStore = create<ReviewState>()(
@@ -138,6 +139,7 @@ export const useReviewStore = create<ReviewState>()(
         applyDecision(set, get, invoiceId, (review) =>
           resumeReview(review, new Date().toISOString()),
         ),
+      resetReviews: () => set({ reviews: {} }),
     }),
     {
       name: REVIEW_STORAGE_KEY,

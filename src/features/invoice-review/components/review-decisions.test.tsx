@@ -113,6 +113,7 @@ describe('review decisions', () => {
     fireEvent.change(supplier, { target: { value: 'Checked supplier' } })
     fireEvent.blur(supplier)
     fireEvent.click(screen.getByRole('button', { name: 'Set aside' }))
+    expect(screen.getByLabelText('Reason')).toHaveFocus()
     fireEvent.click(screen.getByRole('button', { name: 'Save set aside' }))
     expect(
       screen.getByText(/Enter a reason before setting this invoice aside/),
@@ -176,5 +177,42 @@ describe('review decisions', () => {
       screen.getByText(/No pending invoices remain for this client/),
     ).toBeInTheDocument()
     expect(screen.getByText(/Pending 0/)).toBeInTheDocument()
+  })
+
+  it('asks before resetting and leaves unrelated browser storage alone', () => {
+    localStorage.setItem('other-app', 'keep')
+    const originalName = getInvoiceById('inv-001')?.fields.vendorName.value
+    renderWorkspace()
+
+    const supplier = screen.getByLabelText('Supplier')
+    fireEvent.change(supplier, { target: { value: 'Checked supplier' } })
+    fireEvent.blur(supplier)
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm invoice' }))
+    fireEvent.click(screen.getByRole('button', { name: /inv-001/ }))
+    expect(screen.getByLabelText('Supplier')).toBeDisabled()
+    expect(screen.getByLabelText('Supplier')).toHaveValue('Checked supplier')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reset demo' }))
+    const dialog = screen.getByRole('dialog', { name: 'Reset the demo?' })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+    expect(screen.getByLabelText('Supplier')).toBeDisabled()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reset demo' }))
+    fireEvent.click(
+      within(screen.getByRole('dialog', { name: 'Reset the demo?' })).getByRole(
+        'button',
+        { name: 'Reset' },
+      ),
+    )
+
+    expect(screen.getByText(/Pending 13/)).toBeInTheDocument()
+    expect(screen.getByText(/Confirmed 0/)).toBeInTheDocument()
+    expect(screen.getByLabelText('Supplier')).toBeEnabled()
+    expect(screen.getByLabelText('Supplier')).toHaveValue(originalName)
+    expect(localStorage.getItem('other-app')).toBe('keep')
+    expect(getInvoiceById('inv-001')?.fields.vendorName.value).toBe(
+      originalName,
+    )
   })
 })

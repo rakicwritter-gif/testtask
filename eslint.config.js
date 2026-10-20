@@ -7,7 +7,13 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'coverage']),
+  globalIgnores([
+    'dist',
+    'coverage',
+    'playwright-report',
+    'test-results',
+    'blob-report',
+  ]),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -21,4 +27,10 @@ export default defineConfig([
     },
   },
   eslintConfigPrettier,
+  {
+    files: ['playwright.config.ts', 'e2e/**/*.ts'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
 ])

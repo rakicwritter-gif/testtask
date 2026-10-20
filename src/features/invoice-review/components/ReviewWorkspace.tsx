@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useMediaQuery } from '@mantine/hooks'
 import {
   AppShell,
@@ -33,6 +33,9 @@ export function ReviewWorkspace() {
   const [queuePreference, setQueuePreference] =
     useState<QueuePreference>('auto')
   const [notice, setNotice] = useState<string | null>(null)
+  const [resetOpen, setResetOpen] = useState(false)
+  const [formSession, setFormSession] = useState(0)
+  const resetReviews = useReviewStore((state) => state.resetReviews)
   const queueCollapsed =
     queuePreference === 'auto' ? isNarrow : queuePreference === 'closed'
   const reviews = useReviewStore((state) => state.reviews)
@@ -97,97 +100,184 @@ export function ReviewWorkspace() {
   }
 
   return (
-    <AppShell
-      className={classes.column}
-      header={{ height: 56 }}
-      navbar={{
-        width: 264,
-        breakpoint: 'xs',
-        collapsed: { desktop: queueCollapsed, mobile: queueCollapsed },
-      }}
-      aside={{ width: 468, breakpoint: 'xs' }}
-      padding={0}
-      h="100%"
-    >
-      <AppShell.Header>
-        <Group
-          className={classes.headerGroup}
-          px="md"
-          justify="space-between"
-          wrap="nowrap"
-        >
-          <Group gap="sm" wrap="nowrap">
-            <Button
-              size="compact-sm"
-              variant="default"
-              aria-expanded={!queueCollapsed}
-              aria-controls="invoice-queue"
-              onClick={() =>
-                setQueuePreference(queueCollapsed ? 'open' : 'closed')
-              }
-            >
-              {queueCollapsed ? 'Show queue' : 'Hide queue'}
-            </Button>
-            <Title order={1} size="h4">
-              Invoice Review
-            </Title>
-            <Text size="xs" className={classes.progress}>
-              Pending {progress.pending} · Set aside {progress.setAside} ·
-              Confirmed {progress.confirmed}
-            </Text>
-          </Group>
-          <Group gap="xs" wrap="nowrap">
-            <Text component="label" htmlFor="client-select" size="sm">
-              Client
-            </Text>
-            <NativeSelect
-              id="client-select"
-              size="xs"
-              w={260}
-              value={clientId}
-              data={clients.map((client) => ({
-                value: client.id,
-                label: client.name,
-              }))}
-              onChange={(event) => selectClient(event.currentTarget.value)}
-            />
-          </Group>
-        </Group>
-      </AppShell.Header>
-
-      <AppShell.Navbar
-        id="invoice-queue"
-        className={classes.navbar}
-        p={0}
-        hidden={queueCollapsed}
+    <>
+      <ResetDialog
+        open={resetOpen}
+        onCancel={() => setResetOpen(false)}
+        onConfirm={() => {
+          resetReviews()
+          setNotice(null)
+          setFormSession((session) => session + 1)
+          setResetOpen(false)
+        }}
+      />
+      <AppShell
+        className={classes.column}
+        header={{ height: 56 }}
+        navbar={{
+          width: 264,
+          breakpoint: 'xs',
+          collapsed: { desktop: queueCollapsed, mobile: queueCollapsed },
+        }}
+        aside={{ width: 468, breakpoint: 'xs' }}
+        padding={0}
+        h="100%"
       >
-        <InvoiceQueue
-          invoices={queueInvoices}
-          selectedId={selected?.id ?? null}
-          onSelect={(id) => {
-            setNotice(null)
-            setInvoiceId(id)
-          }}
-        />
-      </AppShell.Navbar>
+        <AppShell.Header>
+          <Group
+            className={classes.headerGroup}
+            px="md"
+            justify="space-between"
+            wrap="nowrap"
+          >
+            <Group gap="sm" wrap="nowrap">
+              <Button
+                size="compact-sm"
+                variant="default"
+                aria-expanded={!queueCollapsed}
+                aria-controls="invoice-queue"
+                onClick={() =>
+                  setQueuePreference(queueCollapsed ? 'open' : 'closed')
+                }
+              >
+                {queueCollapsed ? 'Show queue' : 'Hide queue'}
+              </Button>
+              <Title order={1} size="h4">
+                Invoice Review
+              </Title>
+              <Text size="xs" className={classes.progress} role="status">
+                Pending {progress.pending} · Set aside {progress.setAside} ·
+                Confirmed {progress.confirmed}
+              </Text>
+            </Group>
+            <Group gap="xs" wrap="nowrap">
+              <Button
+                size="compact-xs"
+                variant="subtle"
+                color="gray"
+                onClick={() => setResetOpen(true)}
+              >
+                Reset demo
+              </Button>
+              <Text component="label" htmlFor="client-select" size="sm">
+                Client
+              </Text>
+              <NativeSelect
+                id="client-select"
+                size="xs"
+                w={260}
+                value={clientId}
+                data={clients.map((client) => ({
+                  value: client.id,
+                  label: client.name,
+                }))}
+                onChange={(event) => selectClient(event.currentTarget.value)}
+              />
+            </Group>
+          </Group>
+        </AppShell.Header>
 
-      <AppShell.Main className={classes.main}>
-        <DocumentViewer invoice={selected} />
-      </AppShell.Main>
+        <AppShell.Navbar
+          id="invoice-queue"
+          className={classes.navbar}
+          p={0}
+          hidden={queueCollapsed}
+        >
+          <InvoiceQueue
+            invoices={queueInvoices}
+            selectedId={selected?.id ?? null}
+            onSelect={(id) => {
+              setNotice(null)
+              setInvoiceId(id)
+            }}
+          />
+        </AppShell.Navbar>
 
-      <AppShell.Aside className={classes.aside} p={0}>
-        <ReviewPanel
-          invoice={selected}
-          issues={selectedIssues}
-          notice={notice}
-          onOpenInvoice={openInvoice}
-          onCompleted={(summary) => {
-            if (selected) finishDecision(selected.id, summary)
-          }}
-          onNotice={setNotice}
-        />
-      </AppShell.Aside>
-    </AppShell>
+        <AppShell.Main className={classes.main}>
+          <DocumentViewer invoice={selected} />
+        </AppShell.Main>
+
+        <AppShell.Aside className={classes.aside} p={0}>
+          <ReviewPanel
+            invoice={selected}
+            issues={selectedIssues}
+            notice={notice}
+            onOpenInvoice={openInvoice}
+            onCompleted={(summary) => {
+              if (selected) finishDecision(selected.id, summary)
+            }}
+            onNotice={setNotice}
+            formSession={formSession}
+          />
+        </AppShell.Aside>
+      </AppShell>
+    </>
+  )
+}
+
+function ResetDialog({
+  open,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  const ref = useRef<HTMLDialogElement>(null)
+
+  useEffect(() => {
+    const dialog = ref.current
+    if (!open || !dialog || typeof dialog.showModal !== 'function') return
+    if (dialog.open) dialog.close()
+    dialog.showModal()
+  }, [open])
+
+  if (!open) return null
+
+  return (
+    <dialog
+      ref={ref}
+      className={classes.dialog}
+      open
+      aria-modal="true"
+      aria-labelledby="reset-demo-title"
+      onCancel={(event) => {
+        event.preventDefault()
+        onCancel()
+      }}
+      onKeyDown={(event) => {
+        if (event.key !== 'Escape') return
+        event.preventDefault()
+        onCancel()
+      }}
+    >
+      <h2 id="reset-demo-title" className={classes.dialogTitle}>
+        Reset the demo?
+      </h2>
+      <p className={classes.dialogBody}>
+        This removes corrections and review decisions saved for this demo. The
+        supplied invoices stay unchanged, and other data in this browser is left
+        alone.
+      </p>
+      <div className={classes.dialogActions}>
+        <button
+          type="button"
+          className={classes.dialogCancel}
+          autoFocus
+          onClick={onCancel}
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          className={classes.dialogConfirm}
+          onClick={onConfirm}
+        >
+          Reset
+        </button>
+      </div>
+    </dialog>
   )
 }
 

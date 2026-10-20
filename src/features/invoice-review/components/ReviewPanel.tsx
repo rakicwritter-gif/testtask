@@ -23,6 +23,7 @@ type ReviewPanelProps = {
   onOpenInvoice: (invoiceId: string) => void
   onCompleted: (summary: string) => void
   onNotice: (summary: string) => void
+  formSession: number
 }
 
 type FocusRequest = {
@@ -37,6 +38,7 @@ export function ReviewPanel({
   onOpenInvoice,
   onCompleted,
   onNotice,
+  formSession,
 }: ReviewPanelProps) {
   const [tab, setTab] = useState('details')
   const [openAdditionalNonce, setOpenAdditionalNonce] = useState(0)
@@ -141,7 +143,7 @@ export function ReviewPanel({
             </Tabs.List>
             <Tabs.Panel value="details" style={{ overflow: 'auto' }}>
               <InvoiceDetails
-                key={invoice.id}
+                key={`${invoice.id}-${formSession}`}
                 invoice={invoice}
                 issues={issues}
                 openAdditionalNonce={openAdditionalNonce}
@@ -150,7 +152,7 @@ export function ReviewPanel({
             </Tabs.Panel>
             <Tabs.Panel value="lines" style={{ overflow: 'auto' }}>
               <LineItemsTable
-                key={invoice.id}
+                key={`${invoice.id}-${formSession}`}
                 invoice={invoice}
                 issues={issues}
                 locked={locked}
@@ -158,6 +160,7 @@ export function ReviewPanel({
             </Tabs.Panel>
           </Tabs>
           <ReviewActions
+            key={`${invoice.id}-${formSession}`}
             invoiceId={invoice.id}
             review={review}
             issues={issues}
@@ -168,7 +171,7 @@ export function ReviewPanel({
           />
         </>
       ) : (
-        <div className={classes.missing}>
+        <div className={classes.statusCard} role="status">
           <Title order={2} size="h4">
             No invoice selected
           </Title>

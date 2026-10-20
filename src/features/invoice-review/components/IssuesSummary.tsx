@@ -54,7 +54,7 @@ export function IssuesSummary({
               <li key={item.key}>
                 <button
                   type="button"
-                  className={classes.issueButton}
+                  className={`${classes.issueButton} ${severityBorder(item.severity)}`}
                   onClick={() => {
                     if (item.issue) onOpen(item.issue)
                     else setExpanded(true)
@@ -137,6 +137,12 @@ function severityText(severity: ReviewIssue['severity']): string {
   if (severity === 'blocking') return 'Blocking'
   if (severity === 'info') return 'Info'
   return 'Warning'
+}
+
+function severityBorder(severity: ReviewIssue['severity']): string {
+  if (severity === 'blocking') return classes.issueBlocking
+  if (severity === 'info') return classes.issueInfo
+  return classes.issueWarning
 }
 
 function severityClass(severity: ReviewIssue['severity']): string {

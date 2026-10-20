@@ -170,4 +170,24 @@ describe('review store', () => {
       code: 'not-set-aside',
     })
   })
+
+  it('clears only this demo when reset', () => {
+    localStorage.setItem('other-app', 'keep')
+    const original = getInvoiceById('inv-001')
+    if (!original) throw new Error('Missing inv-001')
+    const total = original.fields.totalAmount.value
+
+    useReviewStore.getState().setTextOverride('inv-001', 'vendorName', 'Edited')
+    expect(useReviewStore.getState().confirmInvoice('inv-001').ok).toBe(true)
+
+    useReviewStore.getState().resetReviews()
+
+    expect(useReviewStore.getState().reviews).toEqual({})
+    expect(localStorage.getItem('other-app')).toBe('keep')
+    expect(localStorage.getItem(REVIEW_STORAGE_KEY)).toContain('"reviews":{}')
+    expect(original.fields.totalAmount.value).toBe(total)
+    expect(getInvoiceById('inv-001')?.fields.vendorName.value).not.toBe(
+      'Edited',
+    )
+  })
 })

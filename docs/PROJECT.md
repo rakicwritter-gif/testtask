@@ -16,7 +16,7 @@ I chose a three-column layout:
 
 The main reason is to avoid making the accountant switch between screens while comparing data. The queue can collapse when more space is needed for the document and form. The review panel separates invoice details from line items, which can be quite long.
 
-The basic flow is: **select an invoice → check the original → correct any mistakes → confirm or set aside**.
+The basic flow is: **select an invoice → check the original → correct any mistakes → confirm or set aside**. A discreet **Reset demo** control clears saved corrections and decisions after confirmation. It does not change the supplied invoices or other browser storage.
 
 ## Product decisions
 
@@ -67,7 +67,7 @@ Missing values should remain visible as missing rather than being filled with gu
 
 ## Technical approach
 
-The app uses **React, TypeScript, Vite, Mantine, and Zustand**, with **Vitest and React Testing Library** for testing. The supplied JSON and original documents are local, so there's no need for a backend, authentication, or OCR integration in this exercise.
+The app uses **React, TypeScript, Vite, Mantine, and Zustand**, with **Vitest and React Testing Library** for domain and interaction tests and **Playwright** for two critical-flow checks. The supplied JSON and original documents are local, so there's no need for a backend, authentication, or OCR integration in this exercise. Setup and verification commands are in the README.
 
 The data flow is:
 
@@ -90,3 +90,17 @@ I want validation and review rules outside the React components, so the same rul
 This is a single-user, local-first prototype. Browser persistence is useful for the demo, but it isn't a production audit trail.
 
 I'm intentionally not building uploads, OCR processing, accounting integrations, exports, or collaboration. The priority is a clear, dependable review flow rather than a larger feature set.
+
+## Open questions
+
+These are not settled by the sample, so the prototype uses a small explicit policy instead of guessing:
+
+1. Which fields must be verified before confirmation, and do the requirements differ by client?
+2. Which amount differences are errors, and which are rounding, discounts, or a different tax presentation?
+3. How are missing or unreadable originals obtained before confirmation, and is currency always required?
+
+## Limitations
+
+Browser storage is enough to keep a demo session. It is not secure, shared, or an audit trail. Validation is a review aid, not a jurisdiction's accounting rules. Confidence values are model signals, not calibrated proof. The document viewer shows the supplied files and does not highlight extracted text, because the dataset has no coordinates.
+
+The workspace was built with assistance from Cursor. Rules that would invent an accounting formula, including rewriting a line total from quantity and unit price, were not adopted: the sample mixes net and gross line totals.

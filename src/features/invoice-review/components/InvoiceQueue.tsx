@@ -1,5 +1,5 @@
 import type { KeyboardEvent } from 'react'
-import { Badge, Text } from '@mantine/core'
+import { Badge } from '@mantine/core'
 import type { QueueGroup } from '../model/validation.ts'
 import {
   CURRENCY_NOT_DETECTED,
@@ -57,9 +57,9 @@ export function InvoiceQueue({
     <div className={classes.column}>
       <div className={classes.scroll}>
         {invoices.length === 0 ? (
-          <Text className={classes.missing} size="sm" c="dimmed">
+          <p className={classes.emptyQueue} role="status">
             No invoices for this client.
-          </Text>
+          </p>
         ) : (
           <nav aria-label="Invoices">
             {GROUPS.map((group) => {

@@ -133,7 +133,7 @@ function ViewerBody({ invoice }: { invoice: OriginalInvoice }) {
 
 function Message({ title, body }: { title: string; body: string }) {
   return (
-    <div className={classes.missing}>
+    <div className={classes.statusCard} role="status">
       <Title order={2} size="h4">
         {title}
       </Title>

@@ -141,10 +141,24 @@
   background: white;
 }
 
-.missing {
-  max-width: 420px;
-  margin: 48px auto;
-  padding: 0 24px;
+.statusCard {
+  max-width: 28rem;
+  margin: 48px 24px;
+  padding: 20px 22px;
+  border: 1px solid var(--mantine-color-gray-4);
+  border-radius: var(--mantine-radius-sm);
+  background: var(--mantine-color-body);
+}
+
+.statusCard h2 {
+  margin: 0;
+}
+
+.emptyQueue {
+  margin: 16px;
+  color: var(--mantine-color-dimmed);
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .panel {
@@ -311,15 +325,28 @@
 .viewAll {
   width: 100%;
   border: 1px solid var(--mantine-color-gray-3);
+  border-left-width: 3px;
   border-radius: 4px;
   background: var(--mantine-color-body);
-  padding: 4px 8px;
+  padding: 6px 8px;
   color: inherit;
   font: inherit;
   font-size: 12px;
-  line-height: 1.35;
+  line-height: 1.4;
   text-align: left;
   cursor: pointer;
+}
+
+.issueBlocking {
+  border-left-color: var(--mantine-color-red-7);
+}
+
+.issueWarning {
+  border-left-color: var(--mantine-color-yellow-7);
+}
+
+.issueInfo {
+  border-left-color: var(--mantine-color-gray-6);
 }
 
 .viewAll {
@@ -413,6 +440,69 @@
 }
 
 .blockMessage {
-  color: var(--mantine-color-red-7);
-  font-weight: 700;
+  padding: 6px 8px;
+  border: 1px solid var(--mantine-color-red-3);
+  border-left: 3px solid var(--mantine-color-red-7);
+  border-radius: var(--mantine-radius-sm);
+  background: var(--mantine-color-red-0);
+  color: var(--mantine-color-red-9);
+  font-weight: 600;
+}
+
+.dialog {
+  width: min(28rem, calc(100vw - 32px));
+  padding: 20px;
+  border: 1px solid var(--mantine-color-gray-4);
+  border-radius: var(--mantine-radius-sm);
+  color: inherit;
+}
+
+.dialog::backdrop {
+  background: rgb(15 23 42 / 35%);
+}
+
+.dialogTitle {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+.dialogBody {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.dialogCancel,
+.dialogConfirm {
+  border-radius: var(--mantine-radius-sm);
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.dialogCancel {
+  border: 1px solid var(--mantine-color-gray-4);
+  background: var(--mantine-color-body);
+  color: inherit;
+}
+
+.dialogConfirm {
+  border: 1px solid var(--mantine-color-red-7);
+  background: var(--mantine-color-red-7);
+  color: white;
+}
+
+.dialogCancel:focus-visible,
+.dialogConfirm:focus-visible {
+  outline: 2px solid var(--mantine-color-blue-6);
+  outline-offset: 2px;
 }
