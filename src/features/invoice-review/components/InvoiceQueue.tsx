@@ -1,5 +1,4 @@
-import type { KeyboardEvent } from 'react'
-import { Badge } from '@mantine/core'
+import { useState, type KeyboardEvent } from 'react'
 import type { QueueGroup } from '../model/validation.ts'
 import {
   CURRENCY_NOT_DETECTED,
@@ -33,12 +32,23 @@ const GROUPS: readonly { id: QueueGroup; label: string }[] = [
   { id: 'confirmed', label: 'Confirmed' },
 ]
 
+const FILTERS = [
+  { id: 'all', label: 'All' },
+  { id: 'needs_attention', label: 'Attention' },
+  { id: 'no_issues', label: 'No issues' },
+] as const
+
+type QueueFilter = (typeof FILTERS)[number]['id']
+
 export function InvoiceQueue({
   invoices,
   selectedId,
   onSelect,
 }: InvoiceQueueProps) {
-  const ordered = GROUPS.flatMap((group) =>
+  const [filter, setFilter] = useState<QueueFilter>('all')
+  const groups =
+    filter === 'all' ? GROUPS : GROUPS.filter((group) => group.id === filter)
+  const ordered = groups.flatMap((group) =>
     invoices.filter((invoice) => invoice.group === group.id),
   )
 
@@ -53,16 +63,60 @@ export function InvoiceQueue({
     document.getElementById(queueItemId(next.id))?.focus()
   }
 
+  function moveFilter(event: KeyboardEvent<HTMLDivElement>) {
+    const index = FILTERS.findIndex((item) => item.id === filter)
+    const next =
+      event.key === 'ArrowRight' || event.key === 'ArrowDown'
+        ? FILTERS[(index + 1) % FILTERS.length]
+        : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+          ? FILTERS[(index - 1 + FILTERS.length) % FILTERS.length]
+          : null
+    if (!next) return
+    event.preventDefault()
+    setFilter(next.id)
+  }
+
   return (
     <div className={classes.column}>
+      <div
+        className={classes.queueFilters}
+        role="radiogroup"
+        aria-label="Filter invoices"
+        onKeyDown={moveFilter}
+      >
+        {FILTERS.map((item) => {
+          const count =
+            item.id === 'all'
+              ? invoices.length
+              : invoices.filter((invoice) => invoice.group === item.id).length
+          return (
+            <button
+              key={item.id}
+              type="button"
+              className={classes.queueFilter}
+              role="radio"
+              aria-checked={filter === item.id}
+              tabIndex={filter === item.id ? 0 : -1}
+              onClick={() => setFilter(item.id)}
+            >
+              {item.label}
+              <span className={classes.queueFilterCount}>{count}</span>
+            </button>
+          )
+        })}
+      </div>
       <div className={classes.scroll}>
         {invoices.length === 0 ? (
           <p className={classes.emptyQueue} role="status">
             No invoices for this client.
           </p>
+        ) : ordered.length === 0 ? (
+          <p className={classes.emptyQueue} role="status">
+            No invoices in this view.
+          </p>
         ) : (
           <nav aria-label="Invoices">
-            {GROUPS.map((group) => {
+            {groups.map((group) => {
               const items = invoices.filter(
                 (invoice) => invoice.group === group.id,
               )
@@ -70,14 +124,18 @@ export function InvoiceQueue({
               return (
                 <section
                   key={group.id}
+                  className={classes.queueSection}
                   aria-labelledby={groupHeadingId(group.id)}
                 >
-                  <h3
-                    id={groupHeadingId(group.id)}
-                    className={classes.queueGroup}
-                  >
-                    {group.label}
-                  </h3>
+                  <div className={classes.queueGroupRow}>
+                    <h3
+                      id={groupHeadingId(group.id)}
+                      className={classes.queueGroup}
+                    >
+                      {group.label}
+                    </h3>
+                    <span className={classes.queueCount}>{items.length}</span>
+                  </div>
                   {items.map((invoice) => {
                     const selected = invoice.id === selectedId
                     const currency = invoice.currency
@@ -117,9 +175,11 @@ export function InvoiceQueue({
                                 {invoice.attention}
                               </span>
                             ) : null}
-                            <Badge size="xs" variant="light" color="gray">
+                            <span
+                              className={`${classes.statusPill} ${statusTone(invoice.statusLabel)}`}
+                            >
                               {invoice.statusLabel}
-                            </Badge>
+                            </span>
                           </span>
                         </span>
                         {currency === null ? (
@@ -138,6 +198,12 @@ export function InvoiceQueue({
       </div>
     </div>
   )
+}
+
+function statusTone(label: string): string {
+  if (label === 'Confirmed') return classes.statusConfirmed
+  if (label === 'Set aside') return classes.statusAside
+  return classes.statusPending
 }
 
 function queueItemId(invoiceId: string): string {

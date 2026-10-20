@@ -35,6 +35,11 @@ export function reviewStatusLabel(status: string | undefined): string {
   return PENDING_STATUS
 }
 
+export function formatConfidence(value: number): string {
+  if (!Number.isFinite(value)) return NOT_DETECTED
+  return `${Math.round(value * 100)}%`
+}
+
 export function formatPercent(value: number | null): string {
   if (value === null) return NOT_DETECTED
   return `${formatNumber(value)}%`

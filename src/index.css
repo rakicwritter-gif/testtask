@@ -7,4 +7,16 @@ body,
 body {
   margin: 0;
   overflow: hidden;
+  background: #f5f6f8;
+  color: #171c26;
+  font-family: 'Inter Variable', Inter, 'Segoe UI', system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.mantine-Button-root[data-size='sm'],
+.mantine-Button-root[data-size='md'],
+.mantine-Button-root[data-size='lg'] {
+  height: 36px;
+  min-height: 36px;
+  padding-inline: 14px;
 }

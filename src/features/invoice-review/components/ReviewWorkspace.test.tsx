@@ -146,6 +146,9 @@ describe('ReviewWorkspace', () => {
     ).not.toHaveTextContent('BAM')
 
     const missingOriginal = showInvoice('inv-003')
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Show additional details' }),
+    )
     const accounts = within(
       screen.getByRole('region', { name: 'Invoice review' }),
     ).getByRole('list', { name: 'Bank accounts' })
@@ -170,8 +173,8 @@ describe('ReviewWorkspace', () => {
 
     showInvoice('inv-022')
     fireEvent.click(screen.getByRole('tab', { name: /Line items/ }))
-    expect(screen.getByDisplayValue('0.2566')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('0.0042')).toBeInTheDocument()
+    expect(screen.getByText('0.2566')).toBeInTheDocument()
+    expect(screen.getByText('0.0042')).toBeInTheDocument()
 
     showInvoice('inv-004')
     fireEvent.click(screen.getByRole('tab', { name: /Line items/ }))
@@ -179,7 +182,7 @@ describe('ReviewWorkspace', () => {
     const unit = invoice?.lineItems.find((line) => line.unit.value === 'KO')
       ?.unit.value
     expect(unit).toBe('KO')
-    expect(screen.getAllByDisplayValue('KO').length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/KO/).length).toBeGreaterThan(0)
 
     showInvoice('inv-023')
     expect(screen.getByRole('button', { name: /inv-023/ })).toHaveTextContent(
@@ -187,10 +190,10 @@ describe('ReviewWorkspace', () => {
     )
     fireEvent.click(screen.getByRole('tab', { name: /^Details/ }))
     expect(
-      within(screen.getByRole('region', { name: 'Invoice review' })).getByText(
-        'No invoice number',
-      ),
-    ).toBeInTheDocument()
+      within(
+        screen.getByRole('region', { name: 'Invoice review' }),
+      ).getAllByText('No invoice number').length,
+    ).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole('tab', { name: /Line items/ }))
     expect(screen.getAllByText('Not detected').length).toBeGreaterThan(0)
   })

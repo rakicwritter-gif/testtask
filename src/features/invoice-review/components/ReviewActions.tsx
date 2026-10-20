@@ -85,7 +85,7 @@ export function ReviewActions({
       {status === 'set_aside' ? (
         <>
           <Text size="sm">Set aside: {review?.setAsideReason}</Text>
-          <Button mt={8} size="compact-sm" variant="default" onClick={resume}>
+          <Button mt="sm" size="sm" variant="default" onClick={resume}>
             Resume review
           </Button>
         </>
@@ -108,7 +108,7 @@ export function ReviewActions({
                 id="set-aside-reason"
                 label="Reason"
                 autoFocus
-                size="xs"
+                size="sm"
                 autosize
                 minRows={2}
                 maxRows={4}
@@ -119,13 +119,13 @@ export function ReviewActions({
                   setReasonError(null)
                 }}
               />
-              <Group gap="xs" mt={8}>
-                <Button type="submit" size="compact-sm">
+              <Group gap="sm" mt="sm">
+                <Button type="submit" size="sm">
                   Save set aside
                 </Button>
                 <Button
                   type="button"
-                  size="compact-sm"
+                  size="sm"
                   variant="default"
                   onClick={() => {
                     setSettingAside(false)
@@ -138,16 +138,16 @@ export function ReviewActions({
               </Group>
             </form>
           ) : (
-            <Group gap="xs">
+            <Group gap="sm" grow>
               <Button
-                size="compact-sm"
+                size="sm"
                 variant="default"
                 onClick={() => setSettingAside(true)}
               >
                 Set aside
               </Button>
               <Button
-                size="compact-sm"
+                size="sm"
                 disabled={blocked}
                 aria-describedby={blocked ? 'confirm-blocked' : undefined}
                 onClick={confirm}

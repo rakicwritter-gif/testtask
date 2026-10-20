@@ -10,8 +10,26 @@ export function bankFieldId(invoiceId: string, index: number): string {
   return `field-${invoiceId}-bank-${index}`
 }
 
+const LINE_FOCUS_FIELDS = [
+  'description',
+  'quantity',
+  'unit',
+  'unitPrice',
+  'vatRate',
+  'lineTotal',
+] as const
+
 export function lineFieldId(lineId: string, field: string): string {
   return `line-${lineId}-${field}`
+}
+
+export function lineIdFromFocusId(id: string): string | null {
+  if (!id.startsWith('line-')) return null
+  for (const field of LINE_FOCUS_FIELDS) {
+    const suffix = `-${field}`
+    if (id.endsWith(suffix)) return id.slice('line-'.length, -suffix.length)
+  }
+  return null
 }
 
 export function focusIdForTarget(

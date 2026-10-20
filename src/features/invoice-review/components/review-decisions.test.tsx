@@ -30,7 +30,9 @@ describe('review decisions', () => {
   it('confirms a clear invoice, updates progress, and opens the next pending invoice', () => {
     renderWorkspace()
 
-    expect(screen.getByText(/Pending 13/)).toBeInTheDocument()
+    expect(
+      screen.getByRole('status', { name: /Pending 13/ }),
+    ).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Confirm invoice' }))
 
     expect(screen.getByRole('button', { name: /inv-002/ })).toHaveAttribute(
@@ -38,7 +40,9 @@ describe('review decisions', () => {
       'true',
     )
     expect(screen.getByText(/Invoice confirmed/)).toBeInTheDocument()
-    expect(screen.getByText(/Confirmed 1/)).toBeInTheDocument()
+    expect(
+      screen.getByRole('status', { name: /Confirmed 1/ }),
+    ).toBeInTheDocument()
     expect(
       within(screen.getByRole('region', { name: 'Confirmed' })).getByRole(
         'button',
@@ -128,7 +132,9 @@ describe('review decisions', () => {
       'aria-current',
       'true',
     )
-    expect(screen.getByText(/Set aside 1/)).toBeInTheDocument()
+    expect(
+      screen.getByRole('status', { name: /Set aside 1/ }),
+    ).toBeInTheDocument()
 
     const saved = localStorage.getItem(REVIEW_STORAGE_KEY) ?? ''
     expect(saved).toContain('Waiting for the PDF')
@@ -176,7 +182,9 @@ describe('review decisions', () => {
     expect(
       screen.getByText(/No pending invoices remain for this client/),
     ).toBeInTheDocument()
-    expect(screen.getByText(/Pending 0/)).toBeInTheDocument()
+    expect(
+      screen.getByRole('status', { name: /Pending 0/ }),
+    ).toBeInTheDocument()
   })
 
   it('asks before resetting and leaves unrelated browser storage alone', () => {
@@ -206,8 +214,12 @@ describe('review decisions', () => {
       ),
     )
 
-    expect(screen.getByText(/Pending 13/)).toBeInTheDocument()
-    expect(screen.getByText(/Confirmed 0/)).toBeInTheDocument()
+    expect(
+      screen.getByRole('status', { name: /Pending 13/ }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('status', { name: /Confirmed 0/ }),
+    ).toBeInTheDocument()
     expect(screen.getByLabelText('Supplier')).toBeEnabled()
     expect(screen.getByLabelText('Supplier')).toHaveValue(originalName)
     expect(localStorage.getItem('other-app')).toBe('keep')

@@ -11,7 +11,9 @@ test('corrects a warning, confirms the invoice, and keeps that decision after re
 }) => {
   await page.getByRole('button', { name: /inv-006/ }).click()
   await expect(
-    page.getByRole('tabpanel').getByText('Currency not detected'),
+    page
+      .getByRole('tabpanel')
+      .getByText('Currency not detected', { exact: true }),
   ).toBeVisible()
 
   const currency = page.getByRole('textbox', { name: 'Currency', exact: true })
@@ -24,7 +26,7 @@ test('corrects a warning, confirms the invoice, and keeps that decision after re
     'aria-current',
     'true',
   )
-  await expect(page.getByText(/Confirmed 1/)).toBeVisible()
+  await expect(page.getByRole('status', { name: /Confirmed 1/ })).toBeVisible()
 
   await page.reload()
   const confirmed = page.getByRole('button', { name: /inv-006/ })
@@ -56,7 +58,7 @@ test('sets a missing original aside, resumes the correction, and resets only thi
   await page.getByRole('button', { name: 'Set aside' }).click()
   await page.getByLabel('Reason').fill('Waiting for the PDF')
   await page.getByRole('button', { name: 'Save set aside' }).click()
-  await expect(page.getByText(/Set aside 1/)).toBeVisible()
+  await expect(page.getByRole('status', { name: /Set aside 1/ })).toBeVisible()
 
   await page.getByRole('button', { name: /inv-003/ }).click()
   await expect(page.getByText('Set aside: Waiting for the PDF')).toBeVisible()
@@ -82,8 +84,8 @@ test('sets a missing original aside, resumes the correction, and resets only thi
     .getByRole('button', { name: 'Reset' })
     .click()
 
-  await expect(page.getByText(/Pending 13/)).toBeVisible()
-  await expect(page.getByText(/Set aside 0/)).toBeVisible()
+  await expect(page.getByRole('status', { name: /Pending 13/ })).toBeVisible()
+  await expect(page.getByRole('status', { name: /Set aside 0/ })).toBeVisible()
   await expect(
     page.getByRole('textbox', { name: 'Supplier', exact: true }),
   ).toHaveValue('"EDO-SLAD" d.o.o.')

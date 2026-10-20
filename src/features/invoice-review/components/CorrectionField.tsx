@@ -1,6 +1,7 @@
 import { Textarea, TextInput } from '@mantine/core'
 import { useState, type ChangeEvent } from 'react'
-import type { IssueCue } from '../model/validation.ts'
+import { LOW_CONFIDENCE_THRESHOLD, type IssueCue } from '../model/validation.ts'
+import { formatConfidence } from './display.ts'
 import classes from './workspace.module.css'
 
 type CorrectionFieldProps = {
@@ -39,6 +40,9 @@ export function CorrectionField({
   const [draft, setDraft] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const shown = draft ?? value
+  const valueEmpty = shown.trim() === ''
+  const showProvenance =
+    edited || valueEmpty || confidence < LOW_CONFIDENCE_THRESHOLD
   const hintId = `${id}-original`
   const attentionId = attention ? `${id}-attention` : undefined
   const describedBy =
@@ -62,11 +66,11 @@ export function CorrectionField({
   }
 
   return (
-    <div className={classes.correction}>
+    <div className={edited ? classes.correctionEdited : classes.correction}>
       {multiline ? (
         <Textarea
           id={id}
-          size="xs"
+          size="sm"
           autosize
           minRows={1}
           maxRows={3}
@@ -82,7 +86,7 @@ export function CorrectionField({
       ) : (
         <TextInput
           id={id}
-          size="xs"
+          size="sm"
           value={shown}
           error={error}
           autoComplete="off"
@@ -115,11 +119,18 @@ export function CorrectionField({
             </button>
           )}
           <p id={hintId} className={classes.originalHint}>
-            Original: {originalText}. Confidence {confidence}.
+            Original: {originalText}. Confidence {formatConfidence(confidence)}.
           </p>
         </div>
+      ) : showProvenance ? (
+        <p
+          className={classes.originalHint}
+          title={`${formatConfidence(confidence)} · Original: ${originalText}`}
+        >
+          {formatConfidence(confidence)} · Original: {originalText}
+        </p>
       ) : null}
-      {!edited && shown.trim() === '' && emptyText ? (
+      {!edited && valueEmpty && emptyText ? (
         <p className={classes.emptyHint}>{emptyText}</p>
       ) : null}
       {attention ? (

@@ -30,6 +30,9 @@ export function ReviewWorkspace() {
       null,
   )
   const isNarrow = useMediaQuery('(max-width: 1200px)') ?? false
+  const wideDesktop = useMediaQuery('(min-width: 1440px)') ?? false
+  const queueWidth = wideDesktop ? 300 : 280
+  const reviewWidth = wideDesktop ? 512 : 496
   const [queuePreference, setQueuePreference] =
     useState<QueuePreference>('auto')
   const [notice, setNotice] = useState<string | null>(null)
@@ -113,13 +116,13 @@ export function ReviewWorkspace() {
       />
       <AppShell
         className={classes.column}
-        header={{ height: 56 }}
+        header={{ height: 64 }}
         navbar={{
-          width: 264,
+          width: queueWidth,
           breakpoint: 'xs',
           collapsed: { desktop: queueCollapsed, mobile: queueCollapsed },
         }}
-        aside={{ width: 468, breakpoint: 'xs' }}
+        aside={{ width: reviewWidth, breakpoint: 'xs' }}
         padding={0}
         h="100%"
       >
@@ -129,43 +132,61 @@ export function ReviewWorkspace() {
             px="md"
             justify="space-between"
             wrap="nowrap"
+            gap="md"
           >
             <Group gap="sm" wrap="nowrap">
-              <Button
-                size="compact-sm"
-                variant="default"
-                aria-expanded={!queueCollapsed}
-                aria-controls="invoice-queue"
-                onClick={() =>
-                  setQueuePreference(queueCollapsed ? 'open' : 'closed')
-                }
-              >
-                {queueCollapsed ? 'Show queue' : 'Hide queue'}
-              </Button>
-              <Title order={1} size="h4">
+              <span className={classes.brandMark} aria-hidden="true">
+                IR
+              </span>
+              <Title order={1} className={classes.appTitle}>
                 Invoice Review
               </Title>
-              <Text size="xs" className={classes.progress} role="status">
-                Pending {progress.pending} · Set aside {progress.setAside} ·
-                Confirmed {progress.confirmed}
-              </Text>
             </Group>
-            <Group gap="xs" wrap="nowrap">
-              <Button
-                size="compact-xs"
-                variant="subtle"
-                color="gray"
-                onClick={() => setResetOpen(true)}
+            <p
+              className={classes.progress}
+              role="status"
+              aria-label={`Pending ${progress.pending} · Set aside ${progress.setAside} · Confirmed ${progress.confirmed}`}
+            >
+              <span className={classes.stat} aria-hidden="true">
+                <span className={classes.statLabel}>Pending </span>
+                <span className={`${classes.statValue} ${classes.statPending}`}>
+                  {progress.pending}
+                </span>
+              </span>
+              <span className={classes.statSep} aria-hidden="true">
+                ·
+              </span>
+              <span className={classes.stat} aria-hidden="true">
+                <span className={classes.statLabel}>Set aside </span>
+                <span className={`${classes.statValue} ${classes.statAside}`}>
+                  {progress.setAside}
+                </span>
+              </span>
+              <span className={classes.statSep} aria-hidden="true">
+                ·
+              </span>
+              <span className={classes.stat} aria-hidden="true">
+                <span className={classes.statLabel}>Confirmed </span>
+                <span
+                  className={`${classes.statValue} ${classes.statConfirmed}`}
+                >
+                  {progress.confirmed}
+                </span>
+              </span>
+            </p>
+            <Group gap="sm" wrap="nowrap">
+              <Text
+                component="label"
+                htmlFor="client-select"
+                className={classes.clientLabel}
               >
-                Reset demo
-              </Button>
-              <Text component="label" htmlFor="client-select" size="sm">
                 Client
               </Text>
               <NativeSelect
                 id="client-select"
-                size="xs"
-                w={260}
+                size="sm"
+                w={240}
+                classNames={{ input: classes.headerControl }}
                 value={clientId}
                 data={clients.map((client) => ({
                   value: client.id,
@@ -173,10 +194,30 @@ export function ReviewWorkspace() {
                 }))}
                 onChange={(event) => selectClient(event.currentTarget.value)}
               />
+              <Button
+                size="compact-sm"
+                variant="subtle"
+                color="gray"
+                onClick={() => setResetOpen(true)}
+              >
+                Reset demo
+              </Button>
             </Group>
           </Group>
         </AppShell.Header>
 
+        <button
+          type="button"
+          className={classes.queueToggle}
+          style={{ left: queueCollapsed ? 8 : queueWidth }}
+          aria-expanded={!queueCollapsed}
+          aria-controls="invoice-queue"
+          aria-label={queueCollapsed ? 'Show queue' : 'Hide queue'}
+          data-tooltip={queueCollapsed ? 'Show queue' : 'Hide queue'}
+          onClick={() => setQueuePreference(queueCollapsed ? 'open' : 'closed')}
+        >
+          <QueueChevron collapsed={queueCollapsed} />
+        </button>
         <AppShell.Navbar
           id="invoice-queue"
           className={classes.navbar}
@@ -278,6 +319,21 @@ function ResetDialog({
         </button>
       </div>
     </dialog>
+  )
+}
+
+function QueueChevron({ collapsed }: { collapsed: boolean }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+      <path
+        d={collapsed ? 'M6 3.5 10.5 8 6 12.5' : 'M10 3.5 5.5 8 10 12.5'}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   )
 }
 

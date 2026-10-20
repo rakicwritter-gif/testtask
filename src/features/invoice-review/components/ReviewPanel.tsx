@@ -5,11 +5,12 @@ import { useReviewStore } from '../model/review-store.ts'
 import type { OriginalInvoice } from '../model/types.ts'
 import type { ReviewIssue } from '../model/validation.ts'
 import {
+  formatAmount,
   formatInvoiceNumber,
   NOT_DETECTED,
   reviewStatusLabel,
 } from './display.ts'
-import { focusIdForTarget } from './field-ids.ts'
+import { focusIdForTarget, lineIdFromFocusId } from './field-ids.ts'
 import { InvoiceDetails } from './InvoiceDetails.tsx'
 import { IssuesSummary } from './IssuesSummary.tsx'
 import { LineItemsTable } from './LineItemsTable.tsx'
@@ -92,19 +93,37 @@ export function ReviewPanel({
       {invoice && effective ? (
         <>
           <header className={classes.panelHeader}>
-            <Title order={2} size="h4">
-              {effective.fields.vendorName ?? NOT_DETECTED}
-            </Title>
-            <Text className={classes.muted} mt={4}>
-              {formatInvoiceNumber(effective.fields.invoiceNumber)}
-              {' · '}
-              {invoice.id}
-              {' · '}
-              {invoice.client.name}
-            </Text>
-            <Badge mt={8} size="sm" variant="light" color="gray">
-              {reviewStatusLabel(review?.status)}
-            </Badge>
+            <div className={classes.panelTitleRow}>
+              <div>
+                <Title order={2} className={classes.supplierName}>
+                  {effective.fields.vendorName ?? NOT_DETECTED}
+                </Title>
+                <p className={classes.panelMeta}>
+                  <span className={classes.panelInvoice}>
+                    {formatInvoiceNumber(effective.fields.invoiceNumber)}
+                  </span>
+                  <span aria-hidden="true">·</span>
+                  <span>{invoice.id}</span>
+                  <span aria-hidden="true">·</span>
+                  <span>{invoice.client.name}</span>
+                </p>
+              </div>
+              <Badge
+                size="sm"
+                variant="light"
+                color={statusColor(review?.status)}
+              >
+                {reviewStatusLabel(review?.status)}
+              </Badge>
+            </div>
+            <p className={classes.panelAmount}>
+              {effective.fields.totalAmount === null
+                ? NOT_DETECTED
+                : formatAmount(
+                    effective.fields.totalAmount,
+                    effective.fields.currency,
+                  )}
+            </p>
           </header>
           <IssuesSummary
             invoiceId={invoice.id}
@@ -156,6 +175,9 @@ export function ReviewPanel({
                 invoice={invoice}
                 issues={issues}
                 locked={locked}
+                revealLineId={
+                  focusRequest ? lineIdFromFocusId(focusRequest.id) : null
+                }
               />
             </Tabs.Panel>
           </Tabs>
@@ -182,4 +204,10 @@ export function ReviewPanel({
       )}
     </section>
   )
+}
+
+function statusColor(status: string | undefined): string {
+  if (status === 'confirmed') return 'green'
+  if (status === 'set_aside') return 'orange'
+  return 'gray'
 }

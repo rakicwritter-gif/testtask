@@ -39,6 +39,7 @@ const ESSENTIAL_FIELDS: readonly EssentialField[] = [
     label: 'Supplier',
     kind: 'text',
     emptyText: NOT_DETECTED,
+    wide: true,
   },
   {
     field: 'vendorTaxId',
@@ -52,7 +53,13 @@ const ESSENTIAL_FIELDS: readonly EssentialField[] = [
     kind: 'text',
     emptyText: NOT_DETECTED,
   },
-  { field: 'buyerName', label: 'Buyer', kind: 'text', emptyText: NOT_DETECTED },
+  {
+    field: 'buyerName',
+    label: 'Buyer',
+    kind: 'text',
+    emptyText: NOT_DETECTED,
+    wide: true,
+  },
   {
     field: 'buyerTaxId',
     label: 'Buyer tax ID',
@@ -90,6 +97,7 @@ type EssentialField = {
   label: string
   kind: 'text' | 'date'
   emptyText: string
+  wide?: boolean
 }
 
 const AMOUNT_FIELDS: readonly {
@@ -107,7 +115,9 @@ export function InvoiceDetails({
   openAdditionalNonce,
   locked,
 }: InvoiceDetailsProps) {
-  const [additionalOpen, setAdditionalOpen] = useState(true)
+  const [additionalOpen, setAdditionalOpen] = useState(() =>
+    hasAdditionalIssue(issues),
+  )
   const [seenNonce, setSeenNonce] = useState(openAdditionalNonce)
   if (openAdditionalNonce !== seenNonce) {
     setSeenNonce(openAdditionalNonce)
@@ -172,136 +182,148 @@ export function InvoiceDetails({
 
   return (
     <div>
-      <h3 className={classes.sectionTitle}>Essential details</h3>
-      <dl className={classes.fields}>
-        {ESSENTIAL_FIELDS.map((item) => (
-          <Field
-            key={item.field}
-            label={item.label}
-            inputId={fieldId(invoice.id, item.field)}
-          >
-            <CorrectionField
-              disabled={locked}
-              id={fieldId(invoice.id, item.field)}
-              value={effective.fields[item.field] ?? ''}
-              edited={hasHeaderOverride(review, item.field)}
-              originalText={originalText(
-                invoice.fields[item.field].value,
-                item.emptyText,
-              )}
-              confidence={invoice.fields[item.field].confidence}
-              emptyText={item.emptyText}
-              attention={fieldCue(issues, item.field)}
-              onCommit={(raw) =>
-                item.kind === 'date'
-                  ? commitDate(item.field, raw)
-                  : commitText(item.field, raw)
-              }
-              onRestore={() => clearHeaderOverride(invoice.id, item.field)}
-            />
-          </Field>
-        ))}
-      </dl>
-
-      <h3 className={classes.sectionTitle}>Amounts</h3>
-      <dl className={classes.fields}>
-        <Field label="Currency" inputId={fieldId(invoice.id, 'currency')}>
-          <CorrectionField
-            disabled={locked}
-            id={fieldId(invoice.id, 'currency')}
-            value={effective.fields.currency ?? ''}
-            edited={hasHeaderOverride(review, 'currency')}
-            originalText={originalText(
-              invoice.fields.currency.value,
-              CURRENCY_NOT_DETECTED,
-            )}
-            confidence={invoice.fields.currency.confidence}
-            emptyText={CURRENCY_NOT_DETECTED}
-            attention={fieldCue(issues, 'currency')}
-            onCommit={commitCurrency}
-            onRestore={() => clearHeaderOverride(invoice.id, 'currency')}
-          />
-        </Field>
-        {AMOUNT_FIELDS.map((item) => (
-          <Field
-            key={item.field}
-            label={item.label}
-            inputId={fieldId(invoice.id, item.field)}
-          >
-            <CorrectionField
-              disabled={locked}
-              id={fieldId(invoice.id, item.field)}
-              value={formatInputNumber(effective.fields[item.field])}
-              edited={hasHeaderOverride(review, item.field)}
-              originalText={formatInputNumber(invoice.fields[item.field].value)}
-              confidence={invoice.fields[item.field].confidence}
-              emptyText={NOT_DETECTED}
-              numeric
-              attention={fieldCue(issues, item.field)}
-              onCommit={(raw) => commitAmount(item.field, raw)}
-              onRestore={() => clearHeaderOverride(invoice.id, item.field)}
-            />
-          </Field>
-        ))}
-      </dl>
-
-      <h3 className={classes.sectionTitle}>Additional details</h3>
-      <Button
-        size="compact-xs"
-        variant="subtle"
-        mb={8}
-        aria-expanded={additionalOpen}
-        onClick={() => setAdditionalOpen((open) => !open)}
-      >
-        {additionalOpen ? 'Hide additional details' : 'Show additional details'}
-      </Button>
-      {additionalOpen ? (
-        <dl className={classes.fields}>
-          <Field
-            label="Payment reference"
-            inputId={fieldId(invoice.id, 'paymentReference')}
-          >
-            <CorrectionField
-              disabled={locked}
-              id={fieldId(invoice.id, 'paymentReference')}
-              value={effective.fields.paymentReference ?? ''}
-              edited={hasHeaderOverride(review, 'paymentReference')}
-              originalText={originalText(
-                invoice.fields.paymentReference.value,
-                NOT_DETECTED,
-              )}
-              confidence={invoice.fields.paymentReference.confidence}
-              emptyText={NOT_DETECTED}
-              attention={fieldCue(issues, 'paymentReference')}
-              onCommit={(raw) => commitText('paymentReference', raw)}
-              onRestore={() =>
-                clearHeaderOverride(invoice.id, 'paymentReference')
-              }
-            />
-          </Field>
-          <Field label="Bank accounts">
-            <BankAccounts
-              invoice={invoice}
-              locked={locked}
-              attention={fieldCue(issues, 'bankAccounts')}
-              accounts={effective.fields.bankAccounts}
-              editedIndex={(index) => hasBankOverride(review, index)}
-              onCommit={(index, raw) => {
-                setBankAccountOverride(invoice.id, index, raw.trim())
-                return null
-              }}
-              onRestore={(index) => clearBankOverride(invoice.id, index)}
-            />
-          </Field>
-          <ReadonlyField label="Received">{invoice.receivedAt}</ReadonlyField>
-          <ReadonlyField label="Channel">
-            {invoice.channel === 'mobile' ? 'Mobile' : 'Email'}
-          </ReadonlyField>
-          <ReadonlyField label="Original filename">
-            {invoice.originalFilename}
-          </ReadonlyField>
+      <section className={classes.detailSection}>
+        <h3 className={classes.sectionTitle}>Essential details</h3>
+        <dl className={classes.fieldGrid}>
+          {ESSENTIAL_FIELDS.map((item) => (
+            <Field
+              key={item.field}
+              label={item.label}
+              inputId={fieldId(invoice.id, item.field)}
+              wide={item.wide}
+            >
+              <CorrectionField
+                disabled={locked}
+                id={fieldId(invoice.id, item.field)}
+                value={effective.fields[item.field] ?? ''}
+                edited={hasHeaderOverride(review, item.field)}
+                originalText={originalText(
+                  invoice.fields[item.field].value,
+                  item.emptyText,
+                )}
+                confidence={invoice.fields[item.field].confidence}
+                emptyText={item.emptyText}
+                attention={fieldCue(issues, item.field)}
+                onCommit={(raw) =>
+                  item.kind === 'date'
+                    ? commitDate(item.field, raw)
+                    : commitText(item.field, raw)
+                }
+                onRestore={() => clearHeaderOverride(invoice.id, item.field)}
+              />
+            </Field>
+          ))}
         </dl>
-      ) : null}
+      </section>
+
+      <section className={classes.detailSection}>
+        <h3 className={classes.sectionTitle}>Amounts</h3>
+        <dl className={classes.fieldGrid}>
+          <Field label="Currency" inputId={fieldId(invoice.id, 'currency')}>
+            <CorrectionField
+              disabled={locked}
+              id={fieldId(invoice.id, 'currency')}
+              value={effective.fields.currency ?? ''}
+              edited={hasHeaderOverride(review, 'currency')}
+              originalText={originalText(
+                invoice.fields.currency.value,
+                CURRENCY_NOT_DETECTED,
+              )}
+              confidence={invoice.fields.currency.confidence}
+              emptyText={CURRENCY_NOT_DETECTED}
+              attention={fieldCue(issues, 'currency')}
+              onCommit={commitCurrency}
+              onRestore={() => clearHeaderOverride(invoice.id, 'currency')}
+            />
+          </Field>
+          {AMOUNT_FIELDS.map((item) => (
+            <Field
+              key={item.field}
+              label={item.label}
+              inputId={fieldId(invoice.id, item.field)}
+            >
+              <CorrectionField
+                disabled={locked}
+                id={fieldId(invoice.id, item.field)}
+                value={formatInputNumber(effective.fields[item.field])}
+                edited={hasHeaderOverride(review, item.field)}
+                originalText={formatInputNumber(
+                  invoice.fields[item.field].value,
+                )}
+                confidence={invoice.fields[item.field].confidence}
+                emptyText={NOT_DETECTED}
+                numeric
+                attention={fieldCue(issues, item.field)}
+                onCommit={(raw) => commitAmount(item.field, raw)}
+                onRestore={() => clearHeaderOverride(invoice.id, item.field)}
+              />
+            </Field>
+          ))}
+        </dl>
+      </section>
+
+      <section className={classes.detailSection}>
+        <h3 className={classes.sectionTitle}>Additional details</h3>
+        <Button
+          size="compact-xs"
+          variant="subtle"
+          mb={8}
+          aria-expanded={additionalOpen}
+          onClick={() => setAdditionalOpen((open) => !open)}
+        >
+          {additionalOpen
+            ? 'Hide additional details'
+            : 'Show additional details'}
+        </Button>
+        {additionalOpen ? (
+          <dl className={classes.fieldGrid}>
+            <Field
+              label="Payment reference"
+              inputId={fieldId(invoice.id, 'paymentReference')}
+              wide
+            >
+              <CorrectionField
+                disabled={locked}
+                id={fieldId(invoice.id, 'paymentReference')}
+                value={effective.fields.paymentReference ?? ''}
+                edited={hasHeaderOverride(review, 'paymentReference')}
+                originalText={originalText(
+                  invoice.fields.paymentReference.value,
+                  NOT_DETECTED,
+                )}
+                confidence={invoice.fields.paymentReference.confidence}
+                emptyText={NOT_DETECTED}
+                attention={fieldCue(issues, 'paymentReference')}
+                onCommit={(raw) => commitText('paymentReference', raw)}
+                onRestore={() =>
+                  clearHeaderOverride(invoice.id, 'paymentReference')
+                }
+              />
+            </Field>
+            <Field label="Bank accounts" wide>
+              <BankAccounts
+                invoice={invoice}
+                locked={locked}
+                attention={fieldCue(issues, 'bankAccounts')}
+                accounts={effective.fields.bankAccounts}
+                editedIndex={(index) => hasBankOverride(review, index)}
+                onCommit={(index, raw) => {
+                  setBankAccountOverride(invoice.id, index, raw.trim())
+                  return null
+                }}
+                onRestore={(index) => clearBankOverride(invoice.id, index)}
+              />
+            </Field>
+            <ReadonlyField label="Received">{invoice.receivedAt}</ReadonlyField>
+            <ReadonlyField label="Channel">
+              {invoice.channel === 'mobile' ? 'Mobile' : 'Email'}
+            </ReadonlyField>
+            <ReadonlyField label="Original filename" wide>
+              {invoice.originalFilename}
+            </ReadonlyField>
+          </dl>
+        ) : null}
+      </section>
     </div>
   )
 }
@@ -364,32 +386,45 @@ function BankAccounts({
 function Field({
   label,
   inputId,
+  wide = false,
   children,
 }: {
   label: string
   inputId?: string
+  wide?: boolean
   children: ReactNode
 }) {
   return (
-    <>
+    <div className={wide ? classes.fieldWide : undefined}>
       <dt>{inputId ? <label htmlFor={inputId}>{label}</label> : label}</dt>
       <dd>{children}</dd>
-    </>
+    </div>
   )
 }
 
 function ReadonlyField({
   label,
+  wide = false,
   children,
 }: {
   label: string
+  wide?: boolean
   children: ReactNode
 }) {
   return (
-    <>
+    <div className={wide ? classes.fieldWide : undefined}>
       <dt>{label}</dt>
-      <dd>{children}</dd>
-    </>
+      <dd className={classes.readonlyValue}>{children}</dd>
+    </div>
+  )
+}
+
+function hasAdditionalIssue(issues: readonly ReviewIssue[]): boolean {
+  return issues.some(
+    (issue) =>
+      issue.target.type === 'field' &&
+      (issue.target.field === 'paymentReference' ||
+        issue.target.field === 'bankAccounts'),
   )
 }
 

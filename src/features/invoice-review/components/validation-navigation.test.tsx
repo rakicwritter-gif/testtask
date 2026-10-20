@@ -100,8 +100,10 @@ describe('validation navigation', () => {
       'IVA KOLAČI',
     )
     expect(
-      screen.getByRole('heading', { level: 2 }).parentElement,
-    ).toHaveTextContent('Set aside')
+      within(screen.getByRole('region', { name: 'Invoice review' })).getByText(
+        'Set aside',
+      ),
+    ).toBeInTheDocument()
   })
 
   it('focuses a line item, a required field, the document, and a bank account', () => {
@@ -115,6 +117,7 @@ describe('validation navigation', () => {
     expect(document.getElementById('line-inv-007:3-description')).toHaveFocus()
 
     showInvoice('inv-023')
+    fireEvent.click(screen.getByRole('button', { name: /View all/ }))
     const summary = screen.getByRole('region', { name: 'Issues' })
     const amount = within(summary).getByRole('button', {
       name: /does not match the total 139.18/,

@@ -117,6 +117,9 @@ describe('invoice correction editing', () => {
     renderWorkspace()
     const invoice = showInvoice('inv-003')
     const source = invoice.fields.bankAccounts.value
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Show additional details' }),
+    )
 
     fireEvent.change(screen.getByLabelText('Bank account 2'), {
       target: { value: 'CHANGED' },
@@ -136,15 +139,16 @@ describe('invoice correction editing', () => {
     const second = invoice.lineItems[1]
     if (!first || !second) throw new Error('Expected two lines')
     fireEvent.click(screen.getByRole('tab', { name: /Line items/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Edit line 1/ }))
 
     const quantity = screen.getByLabelText('Quantity, line 1')
     fireEvent.change(quantity, { target: { value: '2,5' } })
     fireEvent.blur(quantity)
 
     expect(screen.getByLabelText('Quantity, line 1')).toHaveValue('2.5')
-    expect(screen.getByLabelText('Quantity, line 2')).toHaveValue(
-      String(second.quantity.value),
-    )
+    expect(
+      screen.getByRole('button', { name: /Edit line 2/ }).closest('tr'),
+    ).toHaveTextContent(String(second.quantity.value))
     expect(screen.getByLabelText('Line total, line 1')).toHaveValue(
       String(first.lineTotal.value),
     )
