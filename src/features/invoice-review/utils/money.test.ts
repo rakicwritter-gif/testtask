@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { DECIMAL_SCALE, parseDecimal } from './money.ts'
+import { DECIMAL_SCALE, parseDecimal, toMinorUnits } from './money.ts'
+
+describe('toMinorUnits', () => {
+  it('converts two-decimal currency amounts to integer cents', () => {
+    expect(toMinorUnits(119.18)).toBe(11918)
+    expect(toMinorUnits(23.63)).toBe(2363)
+    expect(toMinorUnits(139.18)).toBe(13918)
+    expect(toMinorUnits(-1.2)).toBe(-120)
+    expect(toMinorUnits(Number.NaN)).toBeNull()
+  })
+})
 
 describe('parseDecimal', () => {
   it('accepts a decimal comma and a decimal point as the same value', () => {

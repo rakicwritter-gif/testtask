@@ -13,8 +13,10 @@ import {
   parseOptionalText,
 } from '../model/input.ts'
 import { useReviewStore } from '../model/review-store.ts'
+import { fieldCue, type ReviewIssue } from '../model/validation.ts'
 import { parseDecimal, DECIMAL_SCALE } from '../utils/money.ts'
 import { CorrectionField } from './CorrectionField.tsx'
+import { bankFieldId, headerFieldId } from './field-ids.ts'
 import {
   CURRENCY_NOT_DETECTED,
   formatNumber,
@@ -26,6 +28,8 @@ import { Button } from '@mantine/core'
 
 type InvoiceDetailsProps = {
   invoice: OriginalInvoice
+  issues: readonly ReviewIssue[]
+  openAdditionalNonce: number
 }
 
 const ESSENTIAL_FIELDS: readonly EssentialField[] = [
@@ -96,8 +100,17 @@ const AMOUNT_FIELDS: readonly {
   { field: 'totalAmount', label: 'Total' },
 ]
 
-export function InvoiceDetails({ invoice }: InvoiceDetailsProps) {
+export function InvoiceDetails({
+  invoice,
+  issues,
+  openAdditionalNonce,
+}: InvoiceDetailsProps) {
   const [additionalOpen, setAdditionalOpen] = useState(true)
+  const [seenNonce, setSeenNonce] = useState(openAdditionalNonce)
+  if (openAdditionalNonce !== seenNonce) {
+    setSeenNonce(openAdditionalNonce)
+    if (!additionalOpen) setAdditionalOpen(true)
+  }
   const review = useReviewStore((state) => state.reviews[invoice.id])
   const setTextOverride = useReviewStore((state) => state.setTextOverride)
   const setNumberOverride = useReviewStore((state) => state.setNumberOverride)
@@ -175,6 +188,7 @@ export function InvoiceDetails({ invoice }: InvoiceDetailsProps) {
               )}
               confidence={invoice.fields[item.field].confidence}
               emptyText={item.emptyText}
+              attention={fieldCue(issues, item.field)}
               onCommit={(raw) =>
                 item.kind === 'date'
                   ? commitDate(item.field, raw)
@@ -199,6 +213,7 @@ export function InvoiceDetails({ invoice }: InvoiceDetailsProps) {
             )}
             confidence={invoice.fields.currency.confidence}
             emptyText={CURRENCY_NOT_DETECTED}
+            attention={fieldCue(issues, 'currency')}
             onCommit={commitCurrency}
             onRestore={() => clearHeaderOverride(invoice.id, 'currency')}
           />
@@ -217,6 +232,7 @@ export function InvoiceDetails({ invoice }: InvoiceDetailsProps) {
               confidence={invoice.fields[item.field].confidence}
               emptyText={NOT_DETECTED}
               numeric
+              attention={fieldCue(issues, item.field)}
               onCommit={(raw) => commitAmount(item.field, raw)}
               onRestore={() => clearHeaderOverride(invoice.id, item.field)}
             />
@@ -250,6 +266,7 @@ export function InvoiceDetails({ invoice }: InvoiceDetailsProps) {
               )}
               confidence={invoice.fields.paymentReference.confidence}
               emptyText={NOT_DETECTED}
+              attention={fieldCue(issues, 'paymentReference')}
               onCommit={(raw) => commitText('paymentReference', raw)}
               onRestore={() =>
                 clearHeaderOverride(invoice.id, 'paymentReference')
@@ -259,6 +276,7 @@ export function InvoiceDetails({ invoice }: InvoiceDetailsProps) {
           <Field label="Bank accounts">
             <BankAccounts
               invoice={invoice}
+              attention={fieldCue(issues, 'bankAccounts')}
               accounts={effective.fields.bankAccounts}
               editedIndex={(index) => hasBankOverride(review, index)}
               onCommit={(index, raw) => {
@@ -283,12 +301,14 @@ export function InvoiceDetails({ invoice }: InvoiceDetailsProps) {
 
 function BankAccounts({
   invoice,
+  attention,
   accounts,
   editedIndex,
   onCommit,
   onRestore,
 }: {
   invoice: OriginalInvoice
+  attention: ReturnType<typeof fieldCue>
   accounts: readonly string[]
   editedIndex: (index: number) => boolean
   onCommit: (index: number, raw: string) => string | null
@@ -296,25 +316,38 @@ function BankAccounts({
 }) {
   if (accounts.length === 0) return NOT_DETECTED
   return (
-    <ul className={classes.accounts} aria-label="Bank accounts">
-      {accounts.map((account, index) => {
-        const original = invoice.fields.bankAccounts.value[index] ?? ''
-        return (
-          <li key={index}>
-            <CorrectionField
-              id={bankId(invoice.id, index)}
-              ariaLabel={`Bank account ${index + 1}`}
-              value={account}
-              edited={editedIndex(index)}
-              originalText={original === '' ? NOT_DETECTED : original}
-              confidence={invoice.fields.bankAccounts.confidence}
-              onCommit={(raw) => onCommit(index, raw)}
-              onRestore={() => onRestore(index)}
-            />
-          </li>
-        )
-      })}
-    </ul>
+    <>
+      {attention ? (
+        <p
+          className={
+            attention.severity === 'blocking'
+              ? classes.blockingCue
+              : classes.warningCue
+          }
+        >
+          {attention.label}
+        </p>
+      ) : null}
+      <ul className={classes.accounts} aria-label="Bank accounts">
+        {accounts.map((account, index) => {
+          const original = invoice.fields.bankAccounts.value[index] ?? ''
+          return (
+            <li key={index}>
+              <CorrectionField
+                id={bankId(invoice.id, index)}
+                ariaLabel={`Bank account ${index + 1}`}
+                value={account}
+                edited={editedIndex(index)}
+                originalText={original === '' ? NOT_DETECTED : original}
+                confidence={invoice.fields.bankAccounts.confidence}
+                onCommit={(raw) => onCommit(index, raw)}
+                onRestore={() => onRestore(index)}
+              />
+            </li>
+          )
+        })}
+      </ul>
+    </>
   )
 }
 
@@ -351,11 +384,11 @@ function ReadonlyField({
 }
 
 function fieldId(invoiceId: string, field: string): string {
-  return `field-${invoiceId}-${field}`
+  return headerFieldId(invoiceId, field)
 }
 
 function bankId(invoiceId: string, index: number): string {
-  return `field-${invoiceId}-bank-${index}`
+  return bankFieldId(invoiceId, index)
 }
 
 function originalText(value: string | null, emptyText: string): string {

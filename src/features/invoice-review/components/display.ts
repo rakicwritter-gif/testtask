@@ -23,6 +23,12 @@ export function formatInvoiceNumber(value: string | null): string {
   return value
 }
 
+export function reviewStatusLabel(status: string | undefined): string {
+  if (status === 'set_aside') return 'Set aside'
+  if (status === 'confirmed') return 'Confirmed'
+  return PENDING_STATUS
+}
+
 export function formatPercent(value: number | null): string {
   if (value === null) return NOT_DETECTED
   return `${formatNumber(value)}%`

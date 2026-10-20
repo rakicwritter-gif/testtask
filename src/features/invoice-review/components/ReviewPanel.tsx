@@ -1,23 +1,81 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { Badge, Tabs, Text, Title } from '@mantine/core'
 import { getEffectiveInvoice } from '../model/corrections.ts'
 import { useReviewStore } from '../model/review-store.ts'
 import type { OriginalInvoice } from '../model/types.ts'
-import { formatInvoiceNumber, NOT_DETECTED, PENDING_STATUS } from './display.ts'
+import type { ReviewIssue } from '../model/validation.ts'
+import {
+  formatInvoiceNumber,
+  NOT_DETECTED,
+  reviewStatusLabel,
+} from './display.ts'
+import { focusIdForTarget } from './field-ids.ts'
 import { InvoiceDetails } from './InvoiceDetails.tsx'
+import { IssuesSummary } from './IssuesSummary.tsx'
 import { LineItemsTable } from './LineItemsTable.tsx'
 import classes from './workspace.module.css'
 
 type ReviewPanelProps = {
   invoice: OriginalInvoice | null
+  issues: readonly ReviewIssue[]
+  onOpenInvoice: (invoiceId: string) => void
 }
 
-export function ReviewPanel({ invoice }: ReviewPanelProps) {
+type FocusRequest = {
+  id: string
+  nonce: number
+}
+
+export function ReviewPanel({
+  invoice,
+  issues,
+  onOpenInvoice,
+}: ReviewPanelProps) {
   const [tab, setTab] = useState('details')
+  const [openAdditionalNonce, setOpenAdditionalNonce] = useState(0)
+  const [focusRequest, setFocusRequest] = useState<FocusRequest | null>(null)
+  const focusNonce = useRef(0)
   const review = useReviewStore((state) =>
     invoice ? state.reviews[invoice.id] : undefined,
   )
   const effective = invoice ? getEffectiveInvoice(invoice, review) : null
+  const detailCount = issues.filter(
+    (issue) => issue.target.type === 'field',
+  ).length
+  const lineCount = issues.filter(
+    (issue) => issue.target.type === 'line',
+  ).length
+
+  useLayoutEffect(() => {
+    if (!focusRequest) return
+    const node = document.getElementById(focusRequest.id)
+    if (!node) return
+    node.focus()
+    node.scrollIntoView?.({ block: 'nearest' })
+  }, [focusRequest, tab, openAdditionalNonce])
+
+  function openIssue(issue: ReviewIssue) {
+    if (!invoice) return
+    if (issue.target.type === 'invoice') {
+      onOpenInvoice(issue.target.invoiceId)
+      return
+    }
+    if (issue.target.type === 'line') {
+      setTab('lines')
+    } else if (issue.target.type === 'field') {
+      setTab('details')
+      if (
+        issue.target.field === 'paymentReference' ||
+        issue.target.field === 'bankAccounts'
+      ) {
+        setOpenAdditionalNonce((nonce) => nonce + 1)
+      }
+    }
+    const id = focusIdForTarget(invoice.id, issue.target)
+    if (!id) return
+    focusNonce.current += 1
+    setFocusRequest({ id, nonce: focusNonce.current })
+  }
 
   return (
     <section className={classes.panel} aria-label="Invoice review">
@@ -35,9 +93,14 @@ export function ReviewPanel({ invoice }: ReviewPanelProps) {
               {invoice.client.name}
             </Text>
             <Badge mt={8} size="sm" variant="light" color="gray">
-              {PENDING_STATUS}
+              {reviewStatusLabel(review?.status)}
             </Badge>
           </header>
+          <IssuesSummary
+            invoiceId={invoice.id}
+            issues={issues}
+            onOpen={openIssue}
+          />
           <Tabs
             value={tab}
             keepMounted={false}
@@ -51,16 +114,37 @@ export function ReviewPanel({ invoice }: ReviewPanelProps) {
             }}
           >
             <Tabs.List>
-              <Tabs.Tab value="details">Details</Tabs.Tab>
+              <Tabs.Tab value="details">
+                Details
+                {detailCount > 0 ? (
+                  <span className={classes.tabCount}>
+                    {detailCount} to review
+                  </span>
+                ) : null}
+              </Tabs.Tab>
               <Tabs.Tab value="lines">
                 Line items ({invoice.lineItems.length})
+                {lineCount > 0 ? (
+                  <span className={classes.tabCount}>
+                    {lineCount} to review
+                  </span>
+                ) : null}
               </Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="details" style={{ overflow: 'auto' }}>
-              <InvoiceDetails key={invoice.id} invoice={invoice} />
+              <InvoiceDetails
+                key={invoice.id}
+                invoice={invoice}
+                issues={issues}
+                openAdditionalNonce={openAdditionalNonce}
+              />
             </Tabs.Panel>
             <Tabs.Panel value="lines" style={{ overflow: 'auto' }}>
-              <LineItemsTable key={invoice.id} invoice={invoice} />
+              <LineItemsTable
+                key={invoice.id}
+                invoice={invoice}
+                issues={issues}
+              />
             </Tabs.Panel>
           </Tabs>
         </>

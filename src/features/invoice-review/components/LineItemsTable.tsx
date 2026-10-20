@@ -9,6 +9,7 @@ import {
 } from '../model/corrections.ts'
 import { parseOptionalText } from '../model/input.ts'
 import { useReviewStore } from '../model/review-store.ts'
+import { lineCue, type ReviewIssue } from '../model/validation.ts'
 import { DECIMAL_SCALE, parseDecimal } from '../utils/money.ts'
 import { CorrectionField } from './CorrectionField.tsx'
 import { CURRENCY_NOT_DETECTED, formatNumber, NOT_DETECTED } from './display.ts'
@@ -16,6 +17,7 @@ import classes from './workspace.module.css'
 
 type LineItemsTableProps = {
   invoice: OriginalInvoice
+  issues: readonly ReviewIssue[]
 }
 
 const NUMBER_FIELDS: readonly {
@@ -35,7 +37,7 @@ const NUMBER_FIELDS: readonly {
   { field: 'lineTotal', label: 'Line total', scale: DECIMAL_SCALE.money },
 ]
 
-export function LineItemsTable({ invoice }: LineItemsTableProps) {
+export function LineItemsTable({ invoice, issues }: LineItemsTableProps) {
   const review = useReviewStore((state) => state.reviews[invoice.id])
   const setLineTextOverride = useReviewStore(
     (state) => state.setLineTextOverride,
@@ -117,6 +119,7 @@ export function LineItemsTable({ invoice }: LineItemsTableProps) {
                     label="Description"
                     value={current.description}
                     multiline
+                    attention={lineCue(issues, line.id, 'description')}
                     review={review}
                     onCommit={(raw) => commitText(line, 'description', raw)}
                     onRestore={() =>
@@ -130,6 +133,7 @@ export function LineItemsTable({ invoice }: LineItemsTableProps) {
                     field="quantity"
                     label="Quantity"
                     value={current.quantity}
+                    attention={lineCue(issues, line.id, 'quantity')}
                     review={review}
                     onCommit={(raw) =>
                       commitNumber(
@@ -150,6 +154,7 @@ export function LineItemsTable({ invoice }: LineItemsTableProps) {
                     field="unit"
                     label="Unit"
                     value={current.unit}
+                    attention={lineCue(issues, line.id, 'unit')}
                     review={review}
                     onCommit={(raw) => commitText(line, 'unit', raw)}
                     onRestore={() =>
@@ -166,6 +171,7 @@ export function LineItemsTable({ invoice }: LineItemsTableProps) {
                         label={item.label}
                         value={current[item.field]}
                         suffix={item.suffix}
+                        attention={lineCue(issues, line.id, item.field)}
                         review={review}
                         onCommit={(raw) =>
                           commitNumber(line, item.field, item.scale, raw)
@@ -191,6 +197,7 @@ function LineTextCell({
   field,
   label,
   value,
+  attention,
   review,
   multiline = false,
   onCommit,
@@ -200,6 +207,7 @@ function LineTextCell({
   field: LineTextField
   label: string
   value: string | null
+  attention: ReturnType<typeof lineCue>
   review: InvoiceReview | undefined
   multiline?: boolean
   onCommit: (raw: string) => string | null
@@ -217,6 +225,7 @@ function LineTextCell({
       }
       confidence={line[field].confidence}
       emptyText={NOT_DETECTED}
+      attention={attention}
       multiline={multiline}
       onCommit={onCommit}
       onRestore={onRestore}
@@ -230,6 +239,7 @@ function LineNumberCell({
   label,
   value,
   suffix,
+  attention,
   review,
   onCommit,
   onRestore,
@@ -239,6 +249,7 @@ function LineNumberCell({
   label: string
   value: number | null
   suffix?: string
+  attention: ReturnType<typeof lineCue>
   review: InvoiceReview | undefined
   onCommit: (raw: string) => string | null
   onRestore: () => void
@@ -256,6 +267,7 @@ function LineNumberCell({
       }
       confidence={line[field].confidence}
       emptyText={NOT_DETECTED}
+      attention={attention}
       numeric
       suffix={suffix && value !== null ? suffix : undefined}
       onCommit={onCommit}

@@ -22,6 +22,16 @@ const AMBIGUOUS_SEPARATOR =
 const MALFORMED_NUMBER =
   'Enter a number with digits, using either a decimal comma or a decimal point.'
 
+/** Currency amounts compared in cents. Null when the value is not a finite number. */
+export function toMinorUnits(value: number): number | null {
+  if (!Number.isFinite(value)) return null
+  const negative = value < 0
+  const [whole, fraction] = Math.abs(value).toFixed(2).split('.')
+  const minor = Number(whole) * 100 + Number(fraction)
+  if (!Number.isSafeInteger(minor)) return null
+  return negative ? -minor : minor
+}
+
 export function parseDecimal(raw: string, scale: number): DecimalParse {
   const trimmed = raw.trim()
   if (trimmed === '') return { status: 'empty' }

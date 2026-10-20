@@ -162,7 +162,7 @@ describe('ReviewWorkspace', () => {
   it('renders a scrollable line-item table with source units and precision', () => {
     renderWorkspace()
     showInvoice('inv-011')
-    fireEvent.click(screen.getByRole('tab', { name: 'Line items (45)' }))
+    fireEvent.click(screen.getByRole('tab', { name: /Line items \(45\)/ }))
 
     const panel = screen.getByRole('tabpanel')
     expect(panel).toHaveStyle({ overflow: 'auto' })
@@ -185,7 +185,7 @@ describe('ReviewWorkspace', () => {
     expect(screen.getByRole('button', { name: /inv-023/ })).toHaveTextContent(
       'No invoice number',
     )
-    fireEvent.click(screen.getByRole('tab', { name: 'Details' }))
+    fireEvent.click(screen.getByRole('tab', { name: /^Details/ }))
     expect(
       within(screen.getByRole('region', { name: 'Invoice review' })).getByText(
         'No invoice number',

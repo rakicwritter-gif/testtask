@@ -1,5 +1,6 @@
 import { Textarea, TextInput } from '@mantine/core'
 import { useState, type ChangeEvent } from 'react'
+import type { IssueCue } from '../model/validation.ts'
 import classes from './workspace.module.css'
 
 type CorrectionFieldProps = {
@@ -10,6 +11,7 @@ type CorrectionFieldProps = {
   confidence: number
   emptyText?: string
   ariaLabel?: string
+  attention?: IssueCue | null
   multiline?: boolean
   numeric?: boolean
   suffix?: string
@@ -25,6 +27,7 @@ export function CorrectionField({
   confidence,
   emptyText,
   ariaLabel,
+  attention,
   multiline = false,
   numeric = false,
   suffix,
@@ -35,6 +38,10 @@ export function CorrectionField({
   const [error, setError] = useState<string | null>(null)
   const shown = draft ?? value
   const hintId = `${id}-original`
+  const attentionId = attention ? `${id}-attention` : undefined
+  const describedBy =
+    [edited ? hintId : undefined, attentionId].filter(Boolean).join(' ') ||
+    undefined
 
   function change(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     setDraft(event.currentTarget.value)
@@ -51,8 +58,6 @@ export function CorrectionField({
     setDraft(null)
     setError(null)
   }
-
-  const describedBy = edited ? hintId : undefined
 
   return (
     <div className={classes.correction}>
@@ -110,6 +115,18 @@ export function CorrectionField({
       ) : null}
       {!edited && shown.trim() === '' && emptyText ? (
         <p className={classes.emptyHint}>{emptyText}</p>
+      ) : null}
+      {attention ? (
+        <p
+          id={attentionId}
+          className={
+            attention.severity === 'blocking'
+              ? classes.blockingCue
+              : classes.warningCue
+          }
+        >
+          {attention.label}
+        </p>
       ) : null}
     </div>
   )

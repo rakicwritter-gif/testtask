@@ -10,8 +10,11 @@ import {
 } from '@mantine/core'
 import { clients, invoices } from '../data/invoices.ts'
 import { getEffectiveInvoice } from '../model/corrections.ts'
+import { issuesForInvoice } from '../model/selectors.ts'
 import { useReviewStore } from '../model/review-store.ts'
 import type { OriginalInvoice } from '../model/types.ts'
+import { attentionLabel, getQueueGroup } from '../model/validation.ts'
+import { reviewStatusLabel } from './display.ts'
 import { DocumentViewer } from './DocumentViewer.tsx'
 import { InvoiceQueue } from './InvoiceQueue.tsx'
 import { ReviewPanel } from './ReviewPanel.tsx'
@@ -36,15 +39,28 @@ export function ReviewWorkspace() {
   )
   const selected = selectedInvoice(clientInvoices, invoiceId)
   const queueInvoices = clientInvoices.map((invoice) => {
-    const effective = getEffectiveInvoice(invoice, reviews[invoice.id])
+    const review = reviews[invoice.id]
+    const effective = getEffectiveInvoice(invoice, review)
+    const issues = issuesForInvoice(invoice.id, reviews)
     return {
       id: invoice.id,
       vendorName: effective.fields.vendorName,
       invoiceNumber: effective.fields.invoiceNumber,
       totalAmount: effective.fields.totalAmount,
       currency: effective.fields.currency,
+      group: getQueueGroup(review, issues),
+      attention: attentionLabel(issues),
+      statusLabel: reviewStatusLabel(review?.status),
     }
   })
+  const selectedIssues = selected ? issuesForInvoice(selected.id, reviews) : []
+
+  function openInvoice(id: string) {
+    const invoice = invoices.find((item) => item.id === id)
+    if (!invoice) return
+    setClientId(invoice.client.id)
+    setInvoiceId(id)
+  }
 
   function selectClient(nextClientId: string) {
     const nextInvoices = invoices.filter(
@@ -131,7 +147,11 @@ export function ReviewWorkspace() {
       </AppShell.Main>
 
       <AppShell.Aside className={classes.aside} p={0}>
-        <ReviewPanel invoice={selected} />
+        <ReviewPanel
+          invoice={selected}
+          issues={selectedIssues}
+          onOpenInvoice={openInvoice}
+        />
       </AppShell.Aside>
     </AppShell>
   )

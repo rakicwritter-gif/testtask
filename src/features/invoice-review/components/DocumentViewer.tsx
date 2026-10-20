@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Button, Group, Text, Title } from '@mantine/core'
 import type { OriginalInvoice } from '../model/types.ts'
 import { formatInvoiceNumber } from './display.ts'
+import { DOCUMENT_REGION_ID } from './field-ids.ts'
 import classes from './workspace.module.css'
 
 const MIN_ZOOM = 0.5
@@ -14,7 +15,12 @@ type DocumentViewerProps = {
 
 export function DocumentViewer({ invoice }: DocumentViewerProps) {
   return (
-    <section className={classes.viewer} aria-label="Original document">
+    <section
+      id={DOCUMENT_REGION_ID}
+      className={classes.viewer}
+      aria-label="Original document"
+      tabIndex={-1}
+    >
       {invoice ? (
         <ViewerBody
           key={invoice.document?.url ?? `missing-${invoice.id}`}
