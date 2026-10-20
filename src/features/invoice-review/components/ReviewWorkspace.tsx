@@ -10,6 +10,7 @@ import {
 } from '@mantine/core'
 import { clients, invoices } from '../data/invoices.ts'
 import { getEffectiveInvoice } from '../model/corrections.ts'
+import { nextPendingInvoiceId, reviewProgress } from '../model/decisions.ts'
 import { issuesForInvoice } from '../model/selectors.ts'
 import { useReviewStore } from '../model/review-store.ts'
 import type { OriginalInvoice } from '../model/types.ts'
@@ -31,6 +32,7 @@ export function ReviewWorkspace() {
   const isNarrow = useMediaQuery('(max-width: 1200px)') ?? false
   const [queuePreference, setQueuePreference] =
     useState<QueuePreference>('auto')
+  const [notice, setNotice] = useState<string | null>(null)
   const queueCollapsed =
     queuePreference === 'auto' ? isNarrow : queuePreference === 'closed'
   const reviews = useReviewStore((state) => state.reviews)
@@ -54,18 +56,38 @@ export function ReviewWorkspace() {
     }
   })
   const selectedIssues = selected ? issuesForInvoice(selected.id, reviews) : []
+  const progress = reviewProgress(
+    clientInvoices.map((invoice) => invoice.id),
+    reviews,
+  )
 
   function openInvoice(id: string) {
     const invoice = invoices.find((item) => item.id === id)
     if (!invoice) return
+    setNotice(null)
     setClientId(invoice.client.id)
     setInvoiceId(id)
+  }
+
+  function finishDecision(invoiceId: string, summary: string) {
+    const next = nextPendingInvoiceId(
+      clientInvoices.map((invoice) => invoice.id),
+      useReviewStore.getState().reviews,
+      invoiceId,
+    )
+    if (next) {
+      setInvoiceId(next)
+      setNotice(`${summary} Opened the next pending invoice.`)
+      return
+    }
+    setNotice(`${summary} No pending invoices remain for this client.`)
   }
 
   function selectClient(nextClientId: string) {
     const nextInvoices = invoices.filter(
       (invoice) => invoice.client.id === nextClientId,
     )
+    setNotice(null)
     setClientId(nextClientId)
     setInvoiceId((current) => {
       if (current && nextInvoices.some((invoice) => invoice.id === current))
@@ -77,7 +99,7 @@ export function ReviewWorkspace() {
   return (
     <AppShell
       className={classes.column}
-      header={{ height: 52 }}
+      header={{ height: 56 }}
       navbar={{
         width: 264,
         breakpoint: 'xs',
@@ -109,6 +131,10 @@ export function ReviewWorkspace() {
             <Title order={1} size="h4">
               Invoice Review
             </Title>
+            <Text size="xs" className={classes.progress}>
+              Pending {progress.pending} · Set aside {progress.setAside} ·
+              Confirmed {progress.confirmed}
+            </Text>
           </Group>
           <Group gap="xs" wrap="nowrap">
             <Text component="label" htmlFor="client-select" size="sm">
@@ -138,7 +164,10 @@ export function ReviewWorkspace() {
         <InvoiceQueue
           invoices={queueInvoices}
           selectedId={selected?.id ?? null}
-          onSelect={setInvoiceId}
+          onSelect={(id) => {
+            setNotice(null)
+            setInvoiceId(id)
+          }}
         />
       </AppShell.Navbar>
 
@@ -150,7 +179,12 @@ export function ReviewWorkspace() {
         <ReviewPanel
           invoice={selected}
           issues={selectedIssues}
+          notice={notice}
           onOpenInvoice={openInvoice}
+          onCompleted={(summary) => {
+            if (selected) finishDecision(selected.id, summary)
+          }}
+          onNotice={setNotice}
         />
       </AppShell.Aside>
     </AppShell>

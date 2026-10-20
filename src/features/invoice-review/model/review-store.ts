@@ -2,6 +2,13 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { getInvoiceById } from '../data/invoices.ts'
 import {
+  confirmReview,
+  resumeReview,
+  setAsideReview,
+  type DecisionResult,
+} from './decisions.ts'
+import { issuesForInvoice } from './selectors.ts'
+import {
   applyBankAccountOverride,
   applyLineNumberOverride,
   applyLineTextOverride,
@@ -57,11 +64,14 @@ type ReviewState = {
     lineId: string,
     field: LineTextField | LineNumberField,
   ) => void
+  confirmInvoice: (invoiceId: string) => DecisionResult
+  setAsideInvoice: (invoiceId: string, reason: string) => DecisionResult
+  resumeInvoice: (invoiceId: string) => DecisionResult
 }
 
 export const useReviewStore = create<ReviewState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       reviews: {},
       setTextOverride: (invoiceId, field, value) => {
         const now = new Date().toISOString()
@@ -111,6 +121,23 @@ export const useReviewStore = create<ReviewState>()(
           clearLineField(review, lineId, field, now),
         )
       },
+      confirmInvoice: (invoiceId) =>
+        applyDecision(set, get, invoiceId, (review, original, reviews) =>
+          confirmReview(
+            review,
+            issuesForInvoice(invoiceId, reviews),
+            original.document !== null,
+            new Date().toISOString(),
+          ),
+        ),
+      setAsideInvoice: (invoiceId, reason) =>
+        applyDecision(set, get, invoiceId, (review) =>
+          setAsideReview(review, reason, new Date().toISOString()),
+        ),
+      resumeInvoice: (invoiceId) =>
+        applyDecision(set, get, invoiceId, (review) =>
+          resumeReview(review, new Date().toISOString()),
+        ),
     }),
     {
       name: REVIEW_STORAGE_KEY,
@@ -120,6 +147,32 @@ export const useReviewStore = create<ReviewState>()(
     },
   ),
 )
+
+function applyDecision(
+  set: (
+    partial:
+      Partial<ReviewState> | ((state: ReviewState) => Partial<ReviewState>),
+  ) => void,
+  get: () => ReviewState,
+  invoiceId: string,
+  decide: (
+    review: InvoiceReview | undefined,
+    original: OriginalInvoice,
+    reviews: ReviewState['reviews'],
+  ) => DecisionResult,
+): DecisionResult {
+  const original = getInvoiceById(invoiceId)
+  if (!original) return { ok: false, code: 'unknown-invoice' }
+  const result = decide(get().reviews[invoiceId], original, get().reviews)
+  if (!result.ok) return result
+  set((state) => {
+    const reviews = { ...state.reviews }
+    if (result.review) reviews[invoiceId] = result.review
+    else delete reviews[invoiceId]
+    return { reviews }
+  })
+  return result
+}
 
 function updateReview(
   set: (

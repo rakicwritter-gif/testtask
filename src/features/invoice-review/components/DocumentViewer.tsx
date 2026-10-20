@@ -44,7 +44,7 @@ function ViewerBody({ invoice }: { invoice: OriginalInvoice }) {
     return (
       <Message
         title="Original document unavailable"
-        body={`${invoice.originalFilename} was not supplied, so this invoice cannot be checked against its source.`}
+        body={`${invoice.originalFilename} was not supplied, so this invoice cannot be checked against its source. Set it aside from the review panel if the source cannot be checked.`}
       />
     )
   }

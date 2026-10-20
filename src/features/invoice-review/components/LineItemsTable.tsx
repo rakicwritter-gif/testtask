@@ -18,6 +18,7 @@ import classes from './workspace.module.css'
 type LineItemsTableProps = {
   invoice: OriginalInvoice
   issues: readonly ReviewIssue[]
+  locked: boolean
 }
 
 const NUMBER_FIELDS: readonly {
@@ -37,7 +38,11 @@ const NUMBER_FIELDS: readonly {
   { field: 'lineTotal', label: 'Line total', scale: DECIMAL_SCALE.money },
 ]
 
-export function LineItemsTable({ invoice, issues }: LineItemsTableProps) {
+export function LineItemsTable({
+  invoice,
+  issues,
+  locked,
+}: LineItemsTableProps) {
   const review = useReviewStore((state) => state.reviews[invoice.id])
   const setLineTextOverride = useReviewStore(
     (state) => state.setLineTextOverride,
@@ -119,6 +124,7 @@ export function LineItemsTable({ invoice, issues }: LineItemsTableProps) {
                     label="Description"
                     value={current.description}
                     multiline
+                    locked={locked}
                     attention={lineCue(issues, line.id, 'description')}
                     review={review}
                     onCommit={(raw) => commitText(line, 'description', raw)}
@@ -133,6 +139,7 @@ export function LineItemsTable({ invoice, issues }: LineItemsTableProps) {
                     field="quantity"
                     label="Quantity"
                     value={current.quantity}
+                    locked={locked}
                     attention={lineCue(issues, line.id, 'quantity')}
                     review={review}
                     onCommit={(raw) =>
@@ -154,6 +161,7 @@ export function LineItemsTable({ invoice, issues }: LineItemsTableProps) {
                     field="unit"
                     label="Unit"
                     value={current.unit}
+                    locked={locked}
                     attention={lineCue(issues, line.id, 'unit')}
                     review={review}
                     onCommit={(raw) => commitText(line, 'unit', raw)}
@@ -171,6 +179,7 @@ export function LineItemsTable({ invoice, issues }: LineItemsTableProps) {
                         label={item.label}
                         value={current[item.field]}
                         suffix={item.suffix}
+                        locked={locked}
                         attention={lineCue(issues, line.id, item.field)}
                         review={review}
                         onCommit={(raw) =>
@@ -198,6 +207,7 @@ function LineTextCell({
   label,
   value,
   attention,
+  locked,
   review,
   multiline = false,
   onCommit,
@@ -208,6 +218,7 @@ function LineTextCell({
   label: string
   value: string | null
   attention: ReturnType<typeof lineCue>
+  locked: boolean
   review: InvoiceReview | undefined
   multiline?: boolean
   onCommit: (raw: string) => string | null
@@ -216,6 +227,7 @@ function LineTextCell({
   const original = line[field].value
   return (
     <CorrectionField
+      disabled={locked}
       id={`line-${line.id}-${field}`}
       ariaLabel={`${label}, line ${line.index + 1}`}
       value={value ?? ''}
@@ -240,6 +252,7 @@ function LineNumberCell({
   value,
   suffix,
   attention,
+  locked,
   review,
   onCommit,
   onRestore,
@@ -250,12 +263,14 @@ function LineNumberCell({
   value: number | null
   suffix?: string
   attention: ReturnType<typeof lineCue>
+  locked: boolean
   review: InvoiceReview | undefined
   onCommit: (raw: string) => string | null
   onRestore: () => void
 }) {
   return (
     <CorrectionField
+      disabled={locked}
       id={`line-${line.id}-${field}`}
       ariaLabel={`${label}, line ${line.index + 1}`}
       value={formatInputNumber(value)}

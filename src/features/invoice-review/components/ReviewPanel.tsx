@@ -13,12 +13,16 @@ import { focusIdForTarget } from './field-ids.ts'
 import { InvoiceDetails } from './InvoiceDetails.tsx'
 import { IssuesSummary } from './IssuesSummary.tsx'
 import { LineItemsTable } from './LineItemsTable.tsx'
+import { ReviewActions } from './ReviewActions.tsx'
 import classes from './workspace.module.css'
 
 type ReviewPanelProps = {
   invoice: OriginalInvoice | null
   issues: readonly ReviewIssue[]
+  notice: string | null
   onOpenInvoice: (invoiceId: string) => void
+  onCompleted: (summary: string) => void
+  onNotice: (summary: string) => void
 }
 
 type FocusRequest = {
@@ -29,7 +33,10 @@ type FocusRequest = {
 export function ReviewPanel({
   invoice,
   issues,
+  notice,
   onOpenInvoice,
+  onCompleted,
+  onNotice,
 }: ReviewPanelProps) {
   const [tab, setTab] = useState('details')
   const [openAdditionalNonce, setOpenAdditionalNonce] = useState(0)
@@ -39,6 +46,7 @@ export function ReviewPanel({
     invoice ? state.reviews[invoice.id] : undefined,
   )
   const effective = invoice ? getEffectiveInvoice(invoice, review) : null
+  const locked = (review?.status ?? 'pending') !== 'pending'
   const detailCount = issues.filter(
     (issue) => issue.target.type === 'field',
   ).length
@@ -137,6 +145,7 @@ export function ReviewPanel({
                 invoice={invoice}
                 issues={issues}
                 openAdditionalNonce={openAdditionalNonce}
+                locked={locked}
               />
             </Tabs.Panel>
             <Tabs.Panel value="lines" style={{ overflow: 'auto' }}>
@@ -144,9 +153,19 @@ export function ReviewPanel({
                 key={invoice.id}
                 invoice={invoice}
                 issues={issues}
+                locked={locked}
               />
             </Tabs.Panel>
           </Tabs>
+          <ReviewActions
+            invoiceId={invoice.id}
+            review={review}
+            issues={issues}
+            sourceAvailable={invoice.document !== null}
+            notice={notice}
+            onCompleted={onCompleted}
+            onNotice={onNotice}
+          />
         </>
       ) : (
         <div className={classes.missing}>

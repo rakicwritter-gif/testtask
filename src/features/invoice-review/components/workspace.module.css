@@ -38,6 +38,11 @@
   height: 100%;
 }
 
+.progress {
+  color: var(--mantine-color-dimmed);
+  white-space: nowrap;
+}
+
 .queueItem {
   display: flex;
   width: 100%;
@@ -390,5 +395,24 @@
 .tabCount {
   margin-left: 6px;
   font-size: 11px;
+  font-weight: 700;
+}
+
+.actions {
+  flex: none;
+  padding: 10px 16px 12px;
+  border-top: 1px solid var(--mantine-color-gray-3);
+  background: var(--mantine-color-body);
+}
+
+.notice,
+.blockMessage {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.blockMessage {
+  color: var(--mantine-color-red-7);
   font-weight: 700;
 }

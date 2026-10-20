@@ -30,6 +30,7 @@ type InvoiceDetailsProps = {
   invoice: OriginalInvoice
   issues: readonly ReviewIssue[]
   openAdditionalNonce: number
+  locked: boolean
 }
 
 const ESSENTIAL_FIELDS: readonly EssentialField[] = [
@@ -104,6 +105,7 @@ export function InvoiceDetails({
   invoice,
   issues,
   openAdditionalNonce,
+  locked,
 }: InvoiceDetailsProps) {
   const [additionalOpen, setAdditionalOpen] = useState(true)
   const [seenNonce, setSeenNonce] = useState(openAdditionalNonce)
@@ -179,6 +181,7 @@ export function InvoiceDetails({
             inputId={fieldId(invoice.id, item.field)}
           >
             <CorrectionField
+              disabled={locked}
               id={fieldId(invoice.id, item.field)}
               value={effective.fields[item.field] ?? ''}
               edited={hasHeaderOverride(review, item.field)}
@@ -204,6 +207,7 @@ export function InvoiceDetails({
       <dl className={classes.fields}>
         <Field label="Currency" inputId={fieldId(invoice.id, 'currency')}>
           <CorrectionField
+            disabled={locked}
             id={fieldId(invoice.id, 'currency')}
             value={effective.fields.currency ?? ''}
             edited={hasHeaderOverride(review, 'currency')}
@@ -225,6 +229,7 @@ export function InvoiceDetails({
             inputId={fieldId(invoice.id, item.field)}
           >
             <CorrectionField
+              disabled={locked}
               id={fieldId(invoice.id, item.field)}
               value={formatInputNumber(effective.fields[item.field])}
               edited={hasHeaderOverride(review, item.field)}
@@ -257,6 +262,7 @@ export function InvoiceDetails({
             inputId={fieldId(invoice.id, 'paymentReference')}
           >
             <CorrectionField
+              disabled={locked}
               id={fieldId(invoice.id, 'paymentReference')}
               value={effective.fields.paymentReference ?? ''}
               edited={hasHeaderOverride(review, 'paymentReference')}
@@ -276,6 +282,7 @@ export function InvoiceDetails({
           <Field label="Bank accounts">
             <BankAccounts
               invoice={invoice}
+              locked={locked}
               attention={fieldCue(issues, 'bankAccounts')}
               accounts={effective.fields.bankAccounts}
               editedIndex={(index) => hasBankOverride(review, index)}
@@ -301,6 +308,7 @@ export function InvoiceDetails({
 
 function BankAccounts({
   invoice,
+  locked,
   attention,
   accounts,
   editedIndex,
@@ -308,6 +316,7 @@ function BankAccounts({
   onRestore,
 }: {
   invoice: OriginalInvoice
+  locked: boolean
   attention: ReturnType<typeof fieldCue>
   accounts: readonly string[]
   editedIndex: (index: number) => boolean
@@ -334,6 +343,7 @@ function BankAccounts({
           return (
             <li key={index}>
               <CorrectionField
+                disabled={locked}
                 id={bankId(invoice.id, index)}
                 ariaLabel={`Bank account ${index + 1}`}
                 value={account}

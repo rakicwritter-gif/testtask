@@ -12,6 +12,7 @@ type CorrectionFieldProps = {
   emptyText?: string
   ariaLabel?: string
   attention?: IssueCue | null
+  disabled?: boolean
   multiline?: boolean
   numeric?: boolean
   suffix?: string
@@ -28,6 +29,7 @@ export function CorrectionField({
   emptyText,
   ariaLabel,
   attention,
+  disabled = false,
   multiline = false,
   numeric = false,
   suffix,
@@ -73,6 +75,7 @@ export function CorrectionField({
           autoComplete="off"
           aria-label={ariaLabel}
           aria-describedby={describedBy}
+          disabled={disabled}
           onChange={change}
           onBlur={blur}
         />
@@ -85,6 +88,7 @@ export function CorrectionField({
           autoComplete="off"
           aria-label={ariaLabel}
           aria-describedby={describedBy}
+          disabled={disabled}
           inputMode={numeric ? 'decimal' : 'text'}
           classNames={numeric ? { input: classes.numericInput } : undefined}
           rightSection={suffix}
@@ -96,18 +100,20 @@ export function CorrectionField({
       {edited ? (
         <div className={classes.editedRow}>
           <span className={classes.editedMark}>Edited</span>
-          <button
-            type="button"
-            className={classes.restoreButton}
-            onMouseDown={(event) => event.preventDefault()}
-            onClick={() => {
-              setDraft(null)
-              setError(null)
-              onRestore()
-            }}
-          >
-            Restore original
-          </button>
+          {disabled ? null : (
+            <button
+              type="button"
+              className={classes.restoreButton}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => {
+                setDraft(null)
+                setError(null)
+                onRestore()
+              }}
+            >
+              Restore original
+            </button>
+          )}
           <p id={hintId} className={classes.originalHint}>
             Original: {originalText}. Confidence {confidence}.
           </p>

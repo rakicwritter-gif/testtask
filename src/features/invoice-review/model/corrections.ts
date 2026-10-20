@@ -73,6 +73,7 @@ export type InvoiceReview = {
   status: ReviewStatus
   overrides: InvoiceOverrides
   setAsideReason?: string
+  confirmedAt?: string
   updatedAt: string
 }
 
